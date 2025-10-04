@@ -1,0 +1,157 @@
+/* Navbar.css */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgb(245, 243, 243);
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border-radius: 0.75rem;
+  margin: 5px 0 0.8rem 0;   /* ✅ only 10px top margin */
+}
+
+
+
+.navbar-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  margin: 0 1rem;
+}
+
+.navbar-center input {
+  width: 60%;
+  max-width: 400px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  font-size: 0.95rem;
+}
+
+.navbar-center input:focus {
+  outline: none;
+  border-color: #6366f1;
+  background: white;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
+}
+
+.icon-btn:hover {
+  background: #f3f4f6;
+}
+
+.profile img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.profile img:hover {
+  transform: scale(1.05);
+}
+/* Reset some default styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Navbar container */
+.navbar {
+  position: sticky; /* stick to top */
+  top: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #ffffff; /* clean white background */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* subtle shadow */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 1000;
+}
+
+/* Navbar center: search input */
+.navbar-center input {
+  width: 300px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease-in-out;
+}
+
+.navbar-center input:focus {
+  outline: none;
+  border-color: #6366f1; /* indigo-500 for focus */
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Navbar right: icons and profile */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+
+.icon-btn:hover {
+  background-color: rgba(99, 102, 241, 0.1); /* subtle hover effect */
+}
+
+.profile img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border 0.2s ease;
+}
+
+.profile img:hover {
+  border: 2px solid #6366f1; /* subtle focus effect */
+}
+
+/* Responsive: smaller screens */
+@media (max-width: 768px) {
+  .navbar-center input {
+    width: 180px;
+  }
+}
+/* Previous navbar styles remain unchanged */
+
+.icon-btn.alert {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50%, 100% { color: #6366f1; } /* normal color */
+  25%, 75% { color: red; } /* red blink */
+}

@@ -1,0 +1,715 @@
+.transactions-container {
+  max-width: 1000px;
+  margin: 30px auto;
+  padding: 0 20px;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  color: #333;
+}
+
+.card {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+}
+
+.card h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: #2c3e50;
+}
+
+.transaction-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+.form-group input,
+.form-group select {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+  outline: none;
+}
+
+.full-width {
+  grid-column: span 2;
+}
+
+.form-actions {
+  grid-column: span 2;
+  text-align: right;
+}
+
+.form-actions button {
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.form-actions button:hover {
+  background: #4338ca;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.download-btn {
+  background: #16a34a;
+  color: white;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.download-btn:hover {
+  background: #15803d;
+}
+
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.transactions-table th,
+.transactions-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-size: 14px;
+}
+
+.transactions-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.transactions-table tr:hover {
+  background: #f3f4f6;
+}
+
+@media (max-width: 768px) {
+  .transaction-form {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width,
+  .form-actions {
+    grid-column: span 1;
+  }
+
+  .table-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .transactions-table th,
+  .transactions-table td {
+    font-size: 12px;
+    padding: 8px;
+  }
+}
+@media (max-width: 480px) {
+  .transactions-container {
+    padding: 0 10px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .form-actions button,
+  .download-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* --- Form row (Amount + Currency inline) --- */
+.form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+/* --- File input styling --- */
+input[type="file"] {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover {
+  background: #4338ca;
+}
+
+/* --- Table section titles --- */
+.card h2 {
+  margin-bottom: 12px;
+}
+.card h2 + .table-header {
+  margin-top: -8px;
+}
+.chart-carousel {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;           /* Enable horizontal scroll */
+  scroll-snap-type: x mandatory; /* Snap to each card */
+  padding-bottom: 10px;
+  margin: 0 10px;
+}
+
+.chart-carousel::-webkit-scrollbar {
+  height: 8px;                /* Optional: customize scrollbar */
+}
+
+.chart-carousel::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+.chart-card {
+  flex: 0 0 100%;               /* Each card takes 90% of viewport width */
+  scroll-snap-align: start;    /* Snap position */
+  min-width: 300px;            /* Don't shrink too much */
+  max-width: 600px;            /* Optional max width */
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  background-color: #fff;
+  display: flex;
+   font-family: 'JetBrains Mono', monospace;
+  flex-direction: column;
+  align-items: center;
+}
+.chart-card h3 {
+  margin-bottom: 16px;
+   font-family: 'JetBrains Mono', monospace;
+  color: #2c3e50;
+}
+.transactions-section {
+  padding: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  background-color: #f3f4f6;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Header: title + button on same line */
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.transactions-header h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.add-btn {
+  padding: 10px 22px;
+  border-radius: 12px;
+  border: none;
+  background-color: #4f46e5;
+  color: #fff;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.add-btn:hover {
+  background-color: #4338ca;
+}
+
+/* Cards: horizontal layout with horizontal scroll on small devices */
+.transactions-cards-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 10px; /* space for scrollbar */
+}
+
+.transactions-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: nowrap; /* always side by side */
+}
+
+/* Individual card styles */
+.transactions-cards .card {
+  flex: 0 0 300px; /* fixed width cards */
+  min-width: 280px;
+  padding: 20px;
+  color: #fff;
+  border-radius: 16px;
+ background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:svgjs='http://svgjs.dev/svgjs' width='1440' height='560' preserveAspectRatio='none' viewBox='0 0 1440 560'%3e%3cg mask='url(%26quot%3b%23SvgjsMask1000%26quot%3b)' fill='none'%3e%3crect width='1440' height='560' x='0' y='0' fill='rgba(3%2c 3%2c 3%2c 0.9)'%3e%3c/rect%3e%3cpath d='M1170.6224296663488 177.84589322484766L1086.0262838748943 195.82735910481514 1188.6038955463164 262.44203901630215z' fill='rgba(146%2c 14%2c 191%2c 0.4)' class='triangle-float3'%3e%3c/path%3e%3cpath d='M49.78 370.45 a118.78 118.78 0 1 0 237.56 0 a118.78 118.78 0 1 0 -237.56 0z' fill='rgba(146%2c 14%2c 191%2c 0.4)' class='triangle-float3'%3e%3c/path%3e%3cpath d='M422.8593750592988 556.2539269319648L435.3915048971063 413.011027420829 292.14860538597054 400.47889758302153 279.61647554816307 543.7217970941573z' fill='rgba(146%2c 14%2c 191%2c 0.4)' class='triangle-float2'%3e%3c/path%3e%3cpath d='M394.4 232.24 a142.17 142.17 0 1 0 284.34 0 a142.17 142.17 0 1 0 -284.34 0z' fill='rgba(146%2c 14%2c 191%2c 0.4)' class='triangle-float1'%3e%3c/path%3e%3cpath d='M110.56135132344595 454.90697294633304L224.80558353030585 496.4884729062262 152.1428512833391 340.6627407394731z' fill='rgba(146%2c 14%2c 191%2c 0.4)' class='triangle-float1'%3e%3c/path%3e%3cpath d='M369.73 500.15 a186.39 186.39 0 1 0 372.78 0 a186.39 186.39 0 1 0 -372.78 0z' fill='rgba(146%2c 14%2c 191%2c 0.4)' class='triangle-float3'%3e%3c/path%3e%3cpath d='M252.21300914764277 187.88674258878302L353.6243857198772 162.6020466024501 328.3396897335442 61.190670030215685 226.92831316130983 86.47536601654862z' fill='rgba(146%2c 14%2c 191%2c 0.4)' class='triangle-float2'%3e%3c/path%3e%3c/g%3e%3cdefs%3e%3cmask id='SvgjsMask1000'%3e%3crect width='1440' height='560' fill='white'%3e%3c/rect%3e%3c/mask%3e%3cstyle%3e %40keyframes float1 %7b 0%25%7btransform: translate(0%2c 0)%7d 50%25%7btransform: translate(-10px%2c 0)%7d 100%25%7btransform: translate(0%2c 0)%7d %7d .triangle-float1 %7b animation: float1 5s infinite%3b %7d %40keyframes float2 %7b 0%25%7btransform: translate(0%2c 0)%7d 50%25%7btransform: translate(-5px%2c -5px)%7d 100%25%7btransform: translate(0%2c 0)%7d %7d .triangle-float2 %7b animation: float2 4s infinite%3b %7d %40keyframes float3 %7b 0%25%7btransform: translate(0%2c 0)%7d 50%25%7btransform: translate(0%2c -10px)%7d 100%25%7btransform: translate(0%2c 0)%7d %7d .triangle-float3 %7b animation: float3 6s infinite%3b %7d %3c/style%3e%3c/defs%3e%3c/svg%3e");
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.transactions-cards .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+/* Card accent colors */
+.card-entrees {
+  border-left: 5px solid #4f46e5;
+}
+
+.card-sorties {
+  border-left: 5px solid #f59e0b;
+}
+
+/* Card text */
+.transactions-cards .card h3 {
+  font-size: 2rem;
+  font-weight: 600;
+   color: #6b7280;
+  margin: 0;
+}
+
+.transactions-cards .card .balance {
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: #fff;
+   font-family: 'JetBrains Mono', monospace;
+}
+
+.transactions-cards .card .fc-balance {
+  font-size: 1.2rem;
+   font-weight: 700;
+  color: #6b7280;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Optional: Smooth horizontal scroll and hidden scrollbar */
+.transactions-cards-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.transactions-cards-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+.transactions-cards-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+.transactions-cards-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory; /* Enable horizontal snap */
+  -ms-overflow-style: none; /* hide scrollbar in IE/Edge */
+  scrollbar-width: thin; /* for Firefox */
+  padding-bottom: 10px; /* space for scrollbar */
+}
+
+.transactions-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: nowrap;
+}
+
+.transactions-cards .card {
+  flex: 0 0 300px; /* card width */
+  min-width: 250px;
+  scroll-snap-align: start; /* snap each card to start */
+  padding: 10px;
+  border-radius: 16px;
+  background-color: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.transactions-cards .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+/* Optional: smooth scrolling */
+.transactions-cards-wrapper {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar for cleaner UI (optional) */
+.transactions-cards-wrapper::-webkit-scrollbar {
+  display: none;
+}
+.transactions-cards-wrapper {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.transactions-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  margin-bottom: 30px;
+}
+
+.transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.transaction-form .form-row {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.transaction-form input,
+.transaction-form select {
+  width: 100%;
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.transaction-form input:focus,
+.transaction-form select:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.form-actions button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 12px;
+  background: #4f46e5;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.form-actions button:hover {
+  background: #4338ca;
+  transform: translateY(-2px);
+}
+
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.transactions-table th,
+.transactions-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.transactions-table th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.transactions-table tr:hover {
+  background: #f9fafb;
+}
+
+.download-btn {
+  padding: 12px 25px;
+  border-radius: 12px;
+  background-color: #4f46e5;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.download-btn:hover {
+  background-color: #4338ca;
+  transform: translateY(-2px);
+}
+/* Popup Banner */
+.popup-banner {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 14px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #fff;
+  animation: slideDown 0.3s ease, fadeOut 0.5s ease 2.5s forwards;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.popup-banner.success {
+  background-color: #16a34a; /* Green */
+}
+
+.popup-banner.error {
+  background-color: #dc2626; /* Red */
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateY(-10px); }
+}
+/* --- New Styles for Combined Form Fields (Amount and Currency) --- */
+.form-group-combined {
+    display: flex;
+    gap: 15px; /* Spacing between amount and currency */
+}
+
+/* Ensure both fields take roughly equal space, but allow currency to be smaller */
+.amount-group {
+    flex-grow: 2; /* Takes more space */
+}
+
+.currency-group {
+    flex-grow: 1; /* Takes less space */
+    max-width: 120px;
+}
+
+/* --- New Styles for Confirmation Modal --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.modal-details {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #f7f7f7;
+    border-radius: 4px;
+    font-size: 1.1em;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.btn-cancel, .btn-confirm {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-cancel {
+    background-color: #ccc;
+    color: #333;
+}
+
+.btn-confirm {
+    background-color: #4CAF50; /* Green for confirm */
+    color: white;
+}
+
+/* --- Styles for Toast Notification --- */
+.toast-notification {
+    position: fixed;
+    top: 20px; /* Position it at the top */
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 4px;
+    color: white;
+    z-index: 1050;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+    animation: fadeInOut 3s forwards; /* Fade in and out */
+}
+
+.toast-notification.success {
+    background-color: #4CAF50; /* Green */
+}
+
+.toast-notification.error {
+    background-color: #f44336; /* Red */
+}
+
+/* Optional: Add fade animation */
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-20px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Ensure standard form styles are applied to the new groups */
+.transaction-form .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.transaction-form input[type="date"],
+.transaction-form input[type="number"],
+.transaction-form input[type="text"],
+.transaction-form select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Important for width calculation */
+}
+/* Transactions.css */
+
+/* 1. Use Flexbox on the container (.table-header) to arrange children (h2 and button).
+  2. 'justify-content: space-between' pushes the h2 to the left and the button to the right.
+  3. 'align-items: center' vertically centers them.
+*/
+.table-header {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 10px; 
+    /* Add padding/margin as needed for spacing from the top/sides of the card */
+    padding: 10px 0;
+}
+
+/* Style for the smaller download button for visual clarity */
+.download-btn-small {
+    padding: 8px 12px;
+    font-size: 0.9em;
+    font-weight: 600;
+    background-color: #007bff; /* Blue for a modern look */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+    margin-left: 20px; /* Ensure space between title and button if they get close */
+    flex-shrink: 0; /* Prevents the button from shrinking on small screens */
+}
+
+.download-btn-small:hover {
+    background-color: #0056b3;
+}
+
+.download-btn-small:disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+}
+
+/* Ensure the h2 title doesn't break the line */
+.table-header h2 {
+    margin: 0; /* Remove default h2 margin to align perfectly with button */
+}
+
+/* Optional: Improve look of the main download button */
+.download-section {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.download-btn {
+    /* Style for the 'Download All' button at the bottom */
+    padding: 10px 20px;
+    font-size: 1.1em;
+    background-color: #4CAF50; 
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.download-btn:hover {
+    background-color: #45a049;
+}

@@ -1,0 +1,18 @@
+# netlify.toml
+
+# =======================================================
+# 1. API Proxy Rule (for when your backend is deployed)
+# =======================================================
+[[redirects]]
+  from = "/api/*"
+  to = "YOUR_PUBLIC_BACKEND_URL/api/:splat" # Replace this once backend is live
+  status = 200
+  force = true
+
+# =======================================================
+# 2. Single-Page Application (SPA) Fallback Rule (CRITICAL)
+# =======================================================
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

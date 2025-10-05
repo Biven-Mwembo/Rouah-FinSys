@@ -1,6 +1,7 @@
 [build]
-  publish = "FinSys/dist"
+  base = "FinSys"
   command = "npm run build"
+  publish = "FinSys/dist"
 
 [[redirects]]
   from = "/*"

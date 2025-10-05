@@ -4,7 +4,9 @@ import axios from "axios";
 import { supabase } from "../supabaseClient";
 import "./Login.css";
 
-const API_BASE_URL = "https://localhost:7289/api";
+// ✅ Set your backend API base URL here
+const API_BASE_URL = "https://finsys.onrender.com/api";
+
 
 // --- Decode Supabase JWT to extract role ---
 const getUserRole = (session) => {

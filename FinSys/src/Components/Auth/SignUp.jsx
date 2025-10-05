@@ -53,7 +53,7 @@ export default function SignUp() {
       if (formData.photo) payload.append("photo", formData.photo);
 
       const response = await axios.post(
-        "https://localhost:7289/api/Users",
+        "https://finsys.onrender.com/api/Users",
         payload,
         {
           headers: { "Content-Type": "multipart/form-data" },

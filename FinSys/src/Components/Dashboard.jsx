@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Plot from "react-plotly.js";
 
-const API_BASE_URL = "https://localhost:7289/api";
+const API_BASE_URL = "https://finsys.onrender.com/api";
 
 // --- START: Internal Components (Unchanged) ---
 

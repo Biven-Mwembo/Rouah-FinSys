@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import "./Transactions.css";
 
 // ✅ Set your backend API base URL here
-const API_BASE_URL = "https://localhost:7289/api";
+
+const API_BASE_URL = "https://finsys.onrender.com/api";
+
 
 // Function to format date as dd/mm/yy (Correct)
 const formatDate = (dateString) => {

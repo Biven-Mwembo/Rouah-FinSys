@@ -32,13 +32,14 @@ const downloadGroupedCSVWithTotals = (data, filename) => {
     const maxRows = Math.max(entrees.length, sorties.length);
 
     // Header rows
+    // Using semicolon (;) as a separator is often better for Excel compatibility
     const headerRow1 = [
         "ENTRÉES", "", "", "", "",
         "SORTIES", "", "", "", ""
     ];
     const headerRow2 = [
-        "No", "Date", "Dollars", "FC", "Motif",
-        "No", "Date", "Dollars", "FC", "Motif"
+        "No", "Date", "Dollars (USD)", "FC", "Motif",
+        "No", "Date", "Dollars (USD)", "FC", "Motif"
     ];
 
     // Data rows
@@ -50,16 +51,17 @@ const downloadGroupedCSVWithTotals = (data, filename) => {
         const entree = entrees[i] || {};
         const sortie = sorties[i] || {};
 
-        // Add totals while building rows
+        // 🚀 FIX 1: Change currency check from "$" to "USD" to match database/frontend
         const entreeUSD = entree.currency === "USD" ? entree.amount || 0 : 0;
         const entreeFC = entree.currency === "FC" ? entree.amount || 0 : 0;
-        totalEntreeUSD += entreeUSD;
-        totalEntreeFC += entreeFC;
+        totalEntreeUSD += parseFloat(entreeUSD);
+        totalEntreeFC += parseFloat(entreeFC);
 
+        // 🚀 FIX 1: Change currency check from "$" to "USD" to match database/frontend
         const sortieUSD = sortie.currency === "USD" ? sortie.amount || 0 : 0;
         const sortieFC = sortie.currency === "FC" ? sortie.amount || 0 : 0;
-        totalSortieUSD += sortieUSD;
-        totalSortieFC += sortieFC;
+        totalSortieUSD += parseFloat(sortieUSD);
+        totalSortieFC += parseFloat(sortieFC);
 
         dataRows.push([
             i + 1,
@@ -80,25 +82,33 @@ const downloadGroupedCSVWithTotals = (data, filename) => {
     const totalsRow = [
         "TOTAL",
         "",
-        totalEntreeUSD,
-        totalEntreeFC,
+        // Ensure totals are formatted correctly (to two decimal places is common)
+        totalEntreeUSD.toFixed(2), 
+        totalEntreeFC.toFixed(2),
         "",
         "TOTAL",
         "",
-        totalSortieUSD,
-        totalSortieFC,
+        totalSortieUSD.toFixed(2),
+        totalSortieFC.toFixed(2),
         ""
     ];
 
-    // Combine everything
+    // Combine everything, using semicolon (;) as the delimiter for better Excel compatibility
+    const allRows = [headerRow1, headerRow2, ...dataRows, totalsRow];
     const csvContent =
-        "data:text/csv;charset=utf-8," +
-        [headerRow1, headerRow2, ...dataRows, totalsRow].map(e => e.join(",")).join("\n");
+        // 🚀 FIX 2: Use text/csv for content type, but use a delimiter Excel understands (e.g., semicolon)
+        "data:text/csv;charset=utf-8," + 
+        allRows.map(e => e.join(";")).join("\n"); // Use join(";")
 
     // Trigger download
     const link = document.createElement("a");
     link.href = encodeURI(csvContent);
-    link.download = filename;
+    
+    // 🚀 FIX 3: Change the file extension to .xls (Excel)
+    // This trick makes Excel open the CSV file in the expected format automatically.
+    const excelFilename = filename.replace(/\.csv$/i, ".xls");
+    link.download = excelFilename; 
+    
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

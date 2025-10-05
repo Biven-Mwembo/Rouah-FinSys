@@ -157,25 +157,8 @@ function Login() {
           </button>
         </form>
 
-        <div className="separator">
-          <hr />
-          <span>OR</span>
-          <hr />
-        </div>
+       
 
-        <button
-          type="button"
-          className="google-btn"
-          onClick={handleGoogleLogin}
-          disabled={loading}
-        >
-          <img
-            src="google-icon.png"
-            alt="Google"
-            style={{ height: "20px", marginRight: "10px" }}
-          />
-          Continue with Google
-        </button>
 
         <p className="signup-link">
           Don’t have an account?{" "}

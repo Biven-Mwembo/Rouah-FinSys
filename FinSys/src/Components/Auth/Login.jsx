@@ -4,9 +4,8 @@ import axios from "axios";
 import { supabase } from "../supabaseClient";
 import "./Login.css";
 
-// ✅ Set your backend API base URL here
+// ✅ Your backend API
 const API_BASE_URL = "https://finsys.onrender.com/api";
-
 
 // --- Decode Supabase JWT to extract role ---
 const getUserRole = (session) => {
@@ -31,23 +30,36 @@ function Login() {
 
   const navigate = useNavigate();
 
-  // ✅ Centralized login success handler
+  // ✅ Centralized success handler
   const handleLoginSuccess = (user, session) => {
-    // Pick up role from either Supabase JWT or API response
+    // Get the role from token or API response
     const role = session ? getUserRole(session) : user.role || "user";
-
-    // Normalize role naming for redirect
     const normalizedRole = role.toLowerCase();
-    const targetPath =
-      normalizedRole === "admin" ? "/admin/transactions" : "/dashboard";
 
-    // Prepare user for storage
+    // ✅ Determine redirect path based on role
+    const targetPath = {
+  admin: "/admin/transactions",
+  manager: "/manager/dashboard",
+  finance: "/finance/home",
+  user: "/dashboard",
+}[role.toLowerCase()] || "/dashboard";
+
+
+    if (normalizedRole === "admin") {
+      targetPath = "/admin/transactions";
+    } else if (
+      ["financier", "pasteur", "vice-president"].includes(normalizedRole)
+    ) {
+      targetPath = "/financier/transactions";
+    }
+
+    // ✅ Store user data locally
     const userToStore = session ? { ...user, role } : user;
-
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("user", JSON.stringify(userToStore));
     localStorage.setItem("userID", user.id);
 
+    // If login came from API, store token
     if (!session && user.token) {
       localStorage.setItem("token", user.token);
     }
@@ -55,7 +67,7 @@ function Login() {
     setBanner({
       show: true,
       type: "success",
-      message: `Login successful! Redirecting to ${role} area...`,
+      message: `✅ Welcome ${role}! Redirecting...`,
     });
 
     setTimeout(() => navigate(targetPath), 1200);
@@ -70,11 +82,10 @@ function Login() {
         }
       }
     );
-
     return () => listener.subscription.unsubscribe();
   }, [navigate]);
 
-  // ✅ Email/Password login via API
+  // ✅ Email/Password login
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -95,18 +106,16 @@ function Login() {
       handleLoginSuccess({ ...user, token }, null);
     } catch (error) {
       const errorMessage =
-        (typeof error.response?.data === "string"
+        typeof error.response?.data === "string"
           ? error.response.data
-          : error.response?.data?.message || "Login failed. Check credentials.") ||
-        "Login failed. Check credentials and server.";
-
+          : error.response?.data?.message || "Login failed. Check credentials.";
       setBanner({ show: true, type: "error", message: errorMessage });
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Google login via Supabase
+  // ✅ Google login (Supabase)
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -118,12 +127,13 @@ function Login() {
     }
   };
 
-  // --- UI/UX untouched ---
+  // --- UI ---
   return (
     <div className="login-container">
       {banner.show && (
         <div className={`popup-banner ${banner.type}`}>{banner.message}</div>
       )}
+
       <div className="login-card">
         <h2 className="login-title">Welcome Back 👋</h2>
 
@@ -159,6 +169,7 @@ function Login() {
           </button>
         </form>
 
+        
 
         <p className="signup-link">
           Don’t have an account?{" "}

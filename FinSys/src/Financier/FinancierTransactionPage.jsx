@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./Transactions.css"; // reuse same styles or copy into FinancierTransactions.css
+import "./Transactions.css";
 import axios from "axios";
 
 const API_BASE_URL = "https://finsys.onrender.com/api";
@@ -20,11 +20,26 @@ const formatDate = (dateString) => {
 
 export default function FinancierTransactionsPage() {
   const [transactions, setTransactions] = useState([]);
+  const [users, setUsers] = useState([]);
   const [banner, setBanner] = useState({ message: "", type: "" });
   const [totalEntrees, setTotalEntrees] = useState(0);
   const [totalSorties, setTotalSorties] = useState(0);
 
   const token = localStorage.getItem("token");
+
+  // ✅ Fetch all users
+  const fetchAllUsers = async () => {
+    if (!token) return;
+
+    try {
+      const res = await axios.get(`${API_BASE_URL}/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsers(res.data || []);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    }
+  };
 
   // ✅ Fetch all transactions (Read-only)
   const fetchAllTransactions = async () => {
@@ -61,9 +76,26 @@ export default function FinancierTransactionsPage() {
     }
   };
 
+  // ✅ Combine both fetches
   useEffect(() => {
+    fetchAllUsers();
     fetchAllTransactions();
   }, []);
+
+  // ✅ Helper: find user full name by ID
+  const getUserName = (userId, userDetails) => {
+    // If backend already sends userDetails
+    if (userDetails && (userDetails.name || userDetails.surname)) {
+      return `${userDetails.name || ""} ${userDetails.surname || ""}`.trim();
+    }
+
+    // Otherwise, look up by userId from fetched users
+    const user = users.find((u) => u.id === userId);
+    if (user) return `${user.name || ""} ${user.surname || ""}`.trim();
+
+    // Fallback
+    return "Unknown";
+  };
 
   // ✅ Export CSV function
   const downloadCSV = () => {
@@ -80,7 +112,7 @@ export default function FinancierTransactionsPage() {
 
     const csvRows = transactions.map((tx) =>
       [
-        `"${tx.userDetails?.name || ""} ${tx.userDetails?.surname || ""}"`,
+        `"${getUserName(tx.userId, tx.userDetails)}"`,
         `"${formatDate(tx.date)}"`,
         `"${tx.amount}"`,
         `"${tx.currency}"`,
@@ -154,13 +186,7 @@ export default function FinancierTransactionsPage() {
                 transactions.map((tx) => (
                   <tr key={tx.id}>
                     <td>
-                      <strong>
-                        {tx.userDetails
-                          ? `${tx.userDetails.name || ""} ${
-                              tx.userDetails.surname || ""
-                            }`
-                          : "Unknown"}
-                      </strong>
+                      <strong>{getUserName(tx.userId, tx.userDetails)}</strong>
                     </td>
                     <td>{formatDate(tx.date)}</td>
                     <td>{tx.amount}</td>

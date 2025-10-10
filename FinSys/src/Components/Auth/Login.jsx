@@ -15,7 +15,8 @@ const getUserRole = (session) => {
   try {
     const payloadBase64 = accessToken.split(".")[1];
     const decodedPayload = JSON.parse(atob(payloadBase64));
-    return decodedPayload.role || "user";
+    // Assuming the role is stored in the JWT payload
+    return decodedPayload.role || "user"; 
   } catch (e) {
     console.error("Error decoding Supabase token:", e);
     return "user";
@@ -30,27 +31,35 @@ function Login() {
 
   const navigate = useNavigate();
 
+  // The roles that should be redirected to the Financier Transactions page
+  // These must be lowercase to match the normalizedRole check
+  const privilegedRoles = [
+    "financier", 
+    "pasteur", 
+    "vice-president"
+  ];
+
   // ✅ Centralized success handler
   const handleLoginSuccess = (user, session) => {
     // Get the role from token or API response
     const role = session ? getUserRole(session) : user.role || "user";
+    // Normalize to lowercase for consistent checking against privilegedRoles
     const normalizedRole = role.toLowerCase();
 
     // ✅ Determine redirect path based on role
-    const targetPath = {
-  admin: "/admin/transactions",
-  manager: "/manager/dashboard",
-  finance: "/finance/home",
-  user: "/dashboard",
-}[role.toLowerCase()] || "/dashboard";
-
-
-    if (normalizedRole === "admin") {
-      targetPath = "/admin/transactions";
-    } else if (
-      ["financier", "pasteur", "vice-president"].includes(normalizedRole)
-    ) {
-      targetPath = "/financier/transactions";
+    let targetPath;
+    
+    if (privilegedRoles.includes(normalizedRole)) {
+      // **TARGET REDIRECTION:** Redirect Financier, Pasteur, and Vice-President
+      targetPath = "/financier/transactions"; 
+    } else {
+      // Fallback logic for other specified roles
+      targetPath = {
+        admin: "/admin/transactions",
+        manager: "/manager/dashboard",
+        finance: "/finance/home",
+        user: "/dashboard",
+      }[normalizedRole] || "/dashboard";
     }
 
     // ✅ Store user data locally
@@ -168,8 +177,6 @@ function Login() {
             {loading ? "Logging In..." : "Login"}
           </button>
         </form>
-
-        
 
         <p className="signup-link">
           Don’t have an account?{" "}

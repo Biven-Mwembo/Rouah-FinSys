@@ -44,7 +44,7 @@ function Login() {
   const role = session ? getUserRole(session) : user.role || "user";
   const normalizedRole = role.toLowerCase();
 
-  // ✅ Determine redirect path
+  //  Determine redirect path
   let targetPath;
 
   if (normalizedRole === "admin") {

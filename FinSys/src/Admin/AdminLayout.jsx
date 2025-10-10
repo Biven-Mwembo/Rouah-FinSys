@@ -8,9 +8,9 @@ const AdminLayout = () => {
       {/* Sidebar is fixed, so main content needs padding-left */}
       <AdminSidebar />
       <main className="flex-1 p-8 overflow-y-auto ml-64">
-        {/* ml-64 matches the sidebar width */}
-        <Outlet />
-      </main>
+  <Outlet />
+</main>
+
     </div>
   );
 };

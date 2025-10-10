@@ -8,11 +8,13 @@ import TransactionsPage from "./Components/TransactionsPage";
 import Sidebar from "./Components/Sidebar";
 
 // 🔑 ADMIN IMPORT
-import AdminTransactionsPage from "./Admin/AdminTransactionsPage"; 
+import AdminTransactionsPage from "./Admin/AdminTransactionsPage.jsx"; 
 
 // 🚀 NEW FINANCIER IMPORT
 // Assumes the path to your new file is correct (e.g., ./Financier/FinancierTransactionsPage)
+
 import FinancierTransactionsPage from "./Financier/FinancierTransactionPage"; 
+
 
 // 🔑 AUTH HOOK IMPORT
 import { useUserRole } from "./hooks/useAuth"; 

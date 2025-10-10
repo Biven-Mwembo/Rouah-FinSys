@@ -1,0 +1,360 @@
+/* ===========================
+   Transactions.css
+   =========================== */
+
+.transactions-container {
+  padding: 2rem;
+  background: #f9fafb;
+  min-height: 100vh;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: #1f2937;
+}
+
+/* Heading + Description */
+.transactions-container h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  color: #111827;
+}
+
+.transactions-container p {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+/* ===========================
+   Toast Notification
+   =========================== */
+.toast-notification {
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.toast-notification.success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #34d399;
+}
+
+.toast-notification.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #f87171;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===========================
+   Card
+   =========================== */
+.card {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+  transition: all 0.3s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+}
+
+/* ===========================
+   Table
+   =========================== */
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.transactions-table th,
+.transactions-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.transactions-table th {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;
+  background: #f9fafb;
+}
+
+.transactions-table tr:hover {
+  background: #f3f4f6;
+  transition: background 0.2s;
+}
+
+.transactions-table td strong {
+  color: #111827;
+}
+
+/* Centered empty state */
+.text-center {
+  text-align: center;
+  color: #9ca3af;
+  padding: 2rem 0;
+  font-style: italic;
+}
+
+/* ===========================
+   Actions
+   =========================== */
+.action-btn {
+  padding: 6px 12px;
+  margin-right: 6px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.edit-btn {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.edit-btn:hover {
+  background: #dbeafe;
+}
+
+.delete-btn {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+}
+
+/* ===========================
+   Header Row
+   =========================== */
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.download-btn-small {
+  background: #111827;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.download-btn-small:hover {
+  background: #2563eb;
+}
+
+/* ===========================
+   Modal
+   =========================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+  animation: slideUp 0.25s ease-in-out;
+}
+
+.modal-content h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.admin-edit-form label {
+  display: block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.admin-edit-form input,
+.admin-edit-form select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  margin-top: 4px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.admin-edit-form input:focus,
+.admin-edit-form select:focus {
+  border-color: #2563eb;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.2rem;
+}
+
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-confirm {
+  background: #2563eb;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-confirm:hover {
+  background: #1d4ed8;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+@media (max-width: 768px) {
+  .transactions-container {
+    padding: 1rem;
+  }
+
+  .transactions-table th,
+  .transactions-table td {
+    padding: 10px 8px;
+    font-size: 0.8rem;
+  }
+
+  .table-header h2 {
+    font-size: 1rem;
+  }
+
+  .download-btn-small {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+}
+/* ✅ Scrollable wrapper */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth on iOS */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #d1d5db transparent; /* Firefox */
+}
+
+/* ✅ Smooth scrollbar styling (Webkit browsers: Chrome, Edge, Safari) */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #9ca3af; /* gray-400 */
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #4b5563; /* gray-700 */
+}
+
+/* ✅ Make table adapt */
+.transactions-table {
+  min-width: 900px; /* Forces horizontal scroll when screen is small */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.transactions-table th, 
+.transactions-table td {
+  padding: 12px 16px;
+  white-space: nowrap; /* Prevents text wrapping */
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.summary-card {
+  flex: 1;
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: #f8f8f8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.entree-card {
+  border-top: 6px solid #4caf50;
+}
+
+.sortie-card {
+  border-top: 6px solid #f44336;
+}
+
+.download-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.download-btn:hover {
+  background: #0056b3;
+}

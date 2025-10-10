@@ -175,12 +175,13 @@ export default function AdminTransactionsPage() {
             )}
 
             <h1>Admin Transaction Management</h1>
-            <p>View, update, and delete all financial records across all users.</p>
+            
 
             {/* Existing Transactions Table */}
             <div className="card">
                 <div className="table-header">
                     <h2>All Transactions</h2>
+
                 </div>
 
                 <div className="table-responsive">

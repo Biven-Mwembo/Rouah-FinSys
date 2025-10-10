@@ -40,47 +40,44 @@ function Login() {
   ];
 
   // ✅ Centralized success handler
-  const handleLoginSuccess = (user, session) => {
-    // Get the role from token or API response
-    const role = session ? getUserRole(session) : user.role || "user";
-    // Normalize to lowercase for consistent checking against privilegedRoles
-    const normalizedRole = role.toLowerCase();
+ const handleLoginSuccess = (user, session) => {
+  const role = session ? getUserRole(session) : user.role || "user";
+  const normalizedRole = role.toLowerCase();
 
-    // ✅ Determine redirect path based on role
-    let targetPath;
-    
-    if (privilegedRoles.includes(normalizedRole)) {
-      // **TARGET REDIRECTION:** Redirect Financier, Pasteur, and Vice-President
-      targetPath = "/financier/transactions"; 
-    } else {
-      // Fallback logic for other specified roles
-      targetPath = {
-        admin: "/admin/transactions",
-        manager: "/manager/dashboard",
-        finance: "/finance/home",
-        user: "/dashboard",
-      }[normalizedRole] || "/dashboard";
-    }
+  // ✅ Determine redirect path
+  let targetPath;
 
-    // ✅ Store user data locally
-    const userToStore = session ? { ...user, role } : user;
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("user", JSON.stringify(userToStore));
-    localStorage.setItem("userID", user.id);
+  if (normalizedRole === "admin") {
+    targetPath = "/admin/transactions"; // 👈 Admin redirect
+  } else if (["financier", "pasteur", "vice-president"].includes(normalizedRole)) {
+    targetPath = "/financier/transactions";
+  } else if (normalizedRole === "manager") {
+    targetPath = "/manager/dashboard";
+  } else if (normalizedRole === "finance") {
+    targetPath = "/finance/home";
+  } else {
+    targetPath = "/dashboard";
+  }
 
-    // If login came from API, store token
-    if (!session && user.token) {
-      localStorage.setItem("token", user.token);
-    }
+  // ✅ Store user locally
+  const userToStore = session ? { ...user, role } : user;
+  localStorage.setItem("isLoggedIn", "true");
+  localStorage.setItem("user", JSON.stringify(userToStore));
+  localStorage.setItem("userID", user.id);
 
-    setBanner({
-      show: true,
-      type: "success",
-      message: `✅ Welcome ${role}! Redirecting...`,
-    });
+  if (!session && user.token) {
+    localStorage.setItem("token", user.token);
+  }
 
-    setTimeout(() => navigate(targetPath), 1200);
-  };
+  setBanner({
+    show: true,
+    type: "success",
+    message: `✅ Welcome ${role}! Redirecting...`,
+  });
+
+  setTimeout(() => navigate(targetPath), 1200);
+};
+
 
   // ✅ Supabase OAuth listener
   useEffect(() => {

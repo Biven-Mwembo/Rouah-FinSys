@@ -12,7 +12,7 @@ import AdminTransactionsPage from "./Admin/AdminTransactionsPage.jsx";
 
 // 🚀 NEW FINANCIER IMPORT
 // Assumes the path to your new file is correct (e.g., ./Financier/FinancierTransactionsPage)
-import FinancierTransactionsPage from "./Financier/FinancierTransactionsPage.jsx"; 
+import FinancierTransactionsPage from "./financier/FinancierTransactionsPage.jsx"; 
 
 // 🔑 AUTH HOOK IMPORT
 import { useUserRole } from "./hooks/useAuth"; 

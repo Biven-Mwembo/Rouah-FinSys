@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { LayoutDashboard, Users, FileText, LogOut } from "lucide-react";
+import "./AdminLayout.css";
 
 const AdminSidebar = () => {
   const menuItems = [

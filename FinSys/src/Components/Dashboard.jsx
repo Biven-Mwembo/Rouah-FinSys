@@ -278,362 +278,623 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const [currentUserId, setCurrentUserId] = useState(null);
-  // 👇 NEW STATE: 
-  const [successMessage, setSuccessMessage] = useState("");
+  // 👇 NEW STATE: To hold the JWT Token
+  const [authToken, setAuthToken] = useState(null); 
 
-  // NEW STATE: For the transaction details being confirmed
   const [newTransaction, setNewTransaction] = useState({
-    date: new Date().toISOString().slice(0, 10), // Today's date
+    date: new Date().toISOString().slice(0, 10),
     amount: "",
-    currency: "USD",
-    channel: "Sorties", // Default to Sorties for safety/convenience
+    currency: "$",
+    channel: "Entrées",
     motif: "",
-    file: null, // File object
+    file: null,
+    userID: "",
   });
 
-  useEffect(() => {
+
+// Inside export default function Dashboard() { ... }
+
+const handleAddTransaction = async () => {
+    setShowConfirm(false);
+    setErrorMessage(null);
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("Date", newTransaction.date);
+    formData.append("Amount", newTransaction.amount);
+    formData.append("Currency", newTransaction.currency);
+    formData.append("Channel", newTransaction.channel);
+    formData.append("Motif", newTransaction.motif);
+
+    // Append the file only if one was selected
+    if (newTransaction.file) {
+        formData.append("File", newTransaction.file);
+    }
+
+    try {
+        const token = localStorage.getItem("token");
+        const response = await axios.post(
+            `${API_BASE_URL}/transactions`,
+            formData,
+            {
+                headers: {
+                    // Important for file uploads
+                    "Content-Type": "multipart/form-data", 
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        // 🔑 CORE LOGIC: Check for 202 Accepted status for Sorties transactions
+        if (response.status === 202 && newTransaction.channel.toLowerCase() === "sorties") {
+            setSuccessMessage(
+                "Sortie request sent successfully! Awaiting Admin approval. It will appear once approved."
+            );
+        } else {
+            // Standard success message for Entrées (Income) transactions (usually 200/201)
+            setSuccessMessage("Transaction added successfully!");
+        }
+        
+        setShowSuccessBanner(true);
+        setShowModal(false);
+        
+        // Reset the form data after successful submission
+        setNewTransaction({
+            date: new Date().toISOString().slice(0, 10),
+            amount: "",
+            currency: "USD",
+            channel: "Sorties",
+            motif: "",
+            file: null,
+        });
+
+    } catch (error) {
+        console.error("Error creating transaction:", error);
+        const msg =
+            error.response?.data?.Message ||
+            "An error occurred while adding the transaction.";
+        setErrorMessage(msg);
+    } finally {
+        setLoading(false);
+        // Hide success message after 5 seconds
+        setTimeout(() => setShowSuccessBanner(false), 5000);
+    }
+};
+  const [dollarsSum, setDollarsSum] = useState([0, 0]); // [Entrees, Sorties]
+  const [fcSum, setFcSum] = useState([0, 0]); // [Entrees, Sorties]
+
+  // --- Fetch transactions from backend ---
+  const fetchTransactions = async (userId, token) => {
+    if (!userId || !token) {
+      console.log("No UserID or Token available for fetching.");
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const userString = localStorage.getItem("user");
-      if (userString) {
-        const user = JSON.parse(userString);
-        setCurrentUserId(user.id);
-        // Optionally fetch data here if needed, but not strictly required for the `Post` logic
-      } else {
+      // Pass the Authorization header for GET requests too
+      const response = await axios.get(`${API_BASE_URL}/Transactions/user/${userId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      setTableData(response.data);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      setErrorMessage(
+        error.response?.data?.message || "Failed to fetch transactions"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Correct Authentication Check and User ID Retrieval
+  useEffect(() => {
+    const userString = localStorage.getItem("user");
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+
+    if (!userString || !isLoggedIn) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const user = JSON.parse(userString);
+      const userId = user?.id;
+      // 👇 IMPORTANT: Get the token from the user object
+      const token = user?.token; 
+
+      if (!userId || !token) {
+        localStorage.clear();
         navigate("/login");
+        return;
       }
+
+      setCurrentUserId(userId);
+      setAuthToken(token); // 👇 Store the token
+      setNewTransaction((prev) => ({ ...prev, userID: userId }));
+
+      fetchTransactions(userId, token); // 👇 Pass the token to fetch
     } catch (e) {
       console.error("Error parsing user data:", e);
+      setErrorMessage("Local user data corrupted. Please log in again.");
+      localStorage.clear();
       navigate("/login");
     }
   }, [navigate]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewTransaction((prev) => ({ ...prev, [name]: value }));
+  // Update chart sums whenever tableData changes
+ useEffect(() => {
+  const totalDollarsEntrees = tableData
+    .filter((tx) => tx.channel === "Entrées" && tx.currency === "$")
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+
+  const totalDollarsSorties = tableData
+    .filter((tx) => tx.channel === "Sorties" && tx.currency === "$")
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+
+  const totalFcEntrees = tableData
+    .filter((tx) => tx.channel === "Entrées" && tx.currency === "FC")
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+
+  const totalFcSorties = tableData
+    .filter((tx) => tx.channel === "Sorties" && tx.currency === "FC")
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+
+  setDollarsSum([totalDollarsEntrees, totalDollarsSorties]);
+  setFcSum([totalFcEntrees, totalFcSorties]);
+}, [tableData]);
+
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    setNewTransaction((prev) => ({
+      ...prev,
+      [name]: files ? files[0] : value,
+    }));
   };
 
-  const handleFileChange = (e) => {
-    setNewTransaction((prev) => ({ ...prev, file: e.target.files[0] }));
-  };
+const handleConfirmSubmit = async () => {
+  setShowConfirm(false);
+  
+  if (!authToken) {
+    setErrorMessage("Authorization token is missing. Please log in again.");
+    return;
+  }
 
-  const handleShowConfirm = (e) => {
-    e.preventDefault();
-    // Basic validation before showing confirm modal
-    if (!newTransaction.date || !newTransaction.amount || !newTransaction.currency || !newTransaction.channel || !newTransaction.motif) {
-      setErrorMessage("Please fill out all required fields.");
-      return;
+  const formData = new FormData();
+  formData.append("Date", newTransaction.date);
+  formData.append("Amount", newTransaction.amount);
+  formData.append("Currency", newTransaction.currency);
+  formData.append("Channel", newTransaction.channel);
+  formData.append("Motif", newTransaction.motif || "N/A");
+  formData.append("User_Id", currentUserId);
+  if (newTransaction.file) {
+    formData.append("File", newTransaction.file);
+  }
+  
+  // 👇 FIX: Include the Authorization header with the JWT token
+  try {
+    const response = await axios.post(`${API_BASE_URL}/Transactions`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${authToken}`, // <--- THIS IS THE FIX
+      },
+    });
+
+    console.log("Transaction added:", response.data);
+
+    if (currentUserId && authToken) {
+      fetchTransactions(currentUserId, authToken); // Re-fetch with token
     }
-    setShowConfirm(true);
-  };
 
-  // 🔑 UPDATED FUNCTION TO HANDLE 202 STATUS FOR 'SORTIES'
-  const handleAddTransaction = async () => {
-    setShowConfirm(false);
-    setErrorMessage(null);
-    setLoading(true);
+    // Show success banner
+    setShowSuccessBanner(true);
+    setTimeout(() => {
+        setShowSuccessBanner(false);
+    }, 5000);
 
-    const formData = new FormData();
-    formData.append("Date", newTransaction.date);
-    formData.append("Amount", newTransaction.amount);
-    formData.append("Currency", newTransaction.currency);
-    formData.append("Channel", newTransaction.channel);
-    formData.append("Motif", newTransaction.motif);
-
-    if (newTransaction.file) {
-      formData.append("File", newTransaction.file);
+    // Reset form and close the main modal
+    setNewTransaction({
+      date: new Date().toISOString().slice(0, 10),
+      amount: "",
+      currency: "$",
+      channel: "Entrées",
+      motif: "",
+      file: null,
+      userID: currentUserId,
+    });
+    setShowModal(false);
+  } catch (error) {
+    console.error("Error adding transaction:", error.response?.data || error.message);
+    // Enhanced error message for 401
+    if (error.response && error.response.status === 401) {
+      setErrorMessage("Failed to add transaction: Unauthorized. Your session may have expired.");
+    } else {
+      setErrorMessage(error.response?.data?.message || "Failed to add transaction. Check console for details.");
     }
+  }
+};
 
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `${API_BASE_URL}/transactions`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      // 🛑 CORE LOGIC CHANGE FOR SORTIES APPROVAL
-      if (response.status === 202 && newTransaction.channel.toLowerCase() === "sorties") {
-        setSuccessMessage(
-          "Sortie request sent successfully! Awaiting Admin approval. It will appear once approved."
-        );
-      } else {
-        setSuccessMessage("Transaction added successfully!");
-      }
-      
-      setShowSuccessBanner(true);
-      setShowModal(false);
-      
-      // Reset the form data after successful submission
-      setNewTransaction({
-        date: new Date().toISOString().slice(0, 10),
-        amount: "",
-        currency: "USD",
-        channel: "Sorties",
-        motif: "",
-        file: null,
-      });
-
-    } catch (error) {
-      console.error("Error creating transaction:", error);
-      const msg =
-        error.response?.data?.Message ||
-        "An error occurred while adding the transaction.";
-      setErrorMessage(msg);
-    } finally {
-      setLoading(false);
-      // Hide success message after 5 seconds
-      setTimeout(() => setShowSuccessBanner(false), 5000);
-    }
-  };
+const handleSubmit = (e) => {
+  e.preventDefault();
+  
+  if (!newTransaction.amount || newTransaction.amount <= 0) {
+    setErrorMessage("Please enter a valid amount.");
+    return;
+  }
+  
+  setShowConfirm(true);
+};
 
 
-  // --- MOCK DATA (to be replaced by actual data fetching) ---
-  const mockData = {
-    totalBalance: "12,500.00 MAD",
-    fcBalance: "1,200.00 FC",
-    totalIncome: "15,000.00 MAD",
-    totalExpenses: "2,500.00 MAD",
-    chartLayout: {
-      title: "Monthly Cash Flow",
-      xaxis: { title: "Month" },
-      yaxis: { title: "Amount (MAD)" },
-      margin: { t: 40, b: 40, l: 40, r: 40 },
-    },
-    chartData: [
-      {
-        x: ["Jan", "Feb", "Mar", "Apr", "May"],
-        y: [5000, 6000, 4500, 7000, 8000],
-        name: "Income",
-        type: "bar",
-        marker: { color: "#10b981" },
-      },
-      {
-        x: ["Jan", "Feb", "Mar", "Apr", "May"],
-        y: [1000, 1500, 1200, 2000, 1800],
-        name: "Expenses",
-        type: "bar",
-        marker: { color: "#ef4444" },
-      },
-    ],
-    mockTransactions: [
-      {
-        id: 1,
-        date: "2024-05-01",
-        amount: "1000.00",
-        currency: "MAD",
-        channel: "Sorties",
-        motif: "Rent Payment",
-        status: "Approved"
-      },
-      {
-        id: 2,
-        date: "2024-05-05",
-        amount: "500.00",
-        currency: "USD",
-        channel: "Entrées",
-        motif: "Offering",
-        status: "Approved"
-      },
-      {
-        id: 3,
-        date: "2024-05-10",
-        amount: "200.00",
-        currency: "MAD",
-        channel: "Sorties",
-        motif: "Office Supplies",
-        status: "Pending" // Mock pending status for illustration
-      },
-    ],
-  };
-  // --- END MOCK DATA ---
+  // --- Card balances & Calculations ---
+  const entreesDollars = dollarsSum[0];
+  const sortiesDollars = dollarsSum[1];
+  const entreesFC = fcSum[0];
+  const sortiesFC = fcSum[1];
+ 
+  // Calculate Remaining Balances
+  const remainingDollars = (entreesDollars - sortiesDollars).toFixed(2);
+  const remainingFC = (entreesFC - sortiesFC).toFixed(2);
+
+  // Display balances for the existing cards
+  const entreesBalance = `$${entreesDollars.toFixed(2)}`;
+  const sortiesBalance = `$${sortiesDollars.toFixed(2)}`;
+  const entreesFCDisplay = `FC ${entreesFC.toFixed(2)}`;
+  const sortiesFCDisplay = `FC ${sortiesFC.toFixed(2)}`;
+
+  // Determine the transaction summary for the confirmation message
+  const confirmationMessage = `Are you sure you want to add the transaction of ${newTransaction.currency} ${Number(newTransaction.amount).toFixed(2)} as an ${newTransaction.channel.toLowerCase()}? This action is permanent.`;
 
 
   return (
     <div
-      className="dashboard-container"
+      className="dashboard"
       style={{
-        minHeight: "100vh",
+        padding: "8px",
+        fontFamily: "'Inter', sans-serif",
         backgroundColor: "#f9fafb",
-        padding: "20px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "25px",
       }}
     >
+      <Navbar />
       {errorMessage && (
         <MessageBox message={errorMessage} onClose={() => setErrorMessage(null)} />
       )}
-      {showSuccessBanner && <SuccessToast message={successMessage} />}
 
-      <Navbar />
+      {loading ? (
+         <div style={{ padding: '40px', textAlign: 'center', fontSize: '1.2rem', color: '#6b7280' }}>
+            Loading financial data...
+         </div>
+      ) : (
+        <>
+          {/* Transactions Cards Section */}
+         <div className="transactions-section" style={{ marginTop: "0px" }}>
+  <div
+    className="transactions-header"
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "2px",
+    }}
+  >
+    <h2 style={{ fontSize: "1.5rem", fontWeight: 600, color: "#111827" }}>
+      Transactions
+    </h2>
+    <button
+      className="add-btn"
+      onClick={() => setShowModal(true)}
+      style={{
+        backgroundColor: "#4f46e5",
+        color: "#fff",
+        padding: "8px 16px",
+        borderRadius: "8px",
+        fontWeight: 500,
+        cursor: "pointer",
+        border: "none",
+        transition: "all 0.2s",
+      }}
+      onMouseEnter={(e) =>
+        (e.currentTarget.style.backgroundColor = "#4338ca")
+      }
+      onMouseLeave={(e) =>
+        (e.currentTarget.style.backgroundColor = "#4f46e5")
+      }
+    >
+      + Add
+    </button>
+  </div>
 
-      <h1 style={{ color: "#111827", fontSize: "2rem", fontWeight: 700 }}>
-        Financial Dashboard
-      </h1>
-
-      {/* Cards Section */}
-      <div
-        className="cards-section"
-        style={{
-          display: "flex",
-          gap: "20px",
-          flexWrap: "wrap",
-        }}
-      >
-        <Card
-          title="Total Balance"
-          balance={mockData.totalBalance}
-          fcBalance={mockData.fcBalance}
-          color="blue"
-        />
-        <Card
-          title="Total Income"
-          balance={mockData.totalIncome}
-          fcBalance="2,000.00 FC"
-          color="green"
-        />
-        <Card
-          title="Total Expenses"
-          balance={mockData.totalExpenses}
-          fcBalance="800.00 FC"
-          color="red"
-        />
-      </div>
-
-      {/* Main Content Area */}
-      <div
-        className="main-content"
-        style={{
-          display: "flex",
-          gap: "25px",
-          flexWrap: "wrap",
-        }}
-      >
-        {/* Chart */}
-        <div
-          className="chart-container"
-          style={{
-            flex: "2",
-            minWidth: "400px",
-            backgroundColor: "#fff",
-            borderRadius: "16px",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-            padding: "10px",
-          }}
-        >
-          <Plot
-            data={mockData.chartData}
-            layout={mockData.chartLayout}
-            style={{ width: "100%", height: "400px" }}
-          />
-        </div>
-
-        {/* Transaction History and Add Button */}
-        <div
-          className="history-container"
-          style={{
-            flex: "1",
-            minWidth: "300px",
-            backgroundColor: "#fff",
-            borderRadius: "16px",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "15px",
-          }}
-        >
+  <div
+    className="transactions-cards-wrapper"
+    style={{
+      display: "flex",
+      gap: "16px",
+      minWidth: "100%",
+      width: "100%",
+      flexWrap: "nowrap",
+      overflowX: "auto",
+      paddingBottom: "0px",
+      fontFamily: "'JetBrains Mono', monospace", // ✅ JetBrains-like font
+    }}
+  >
+    <Card
+      style={{
+        minWidth: "300px", // ✅ Increased width
+        flex: "0 0 auto",
+        fontFamily: "'JetBrains Mono', monospace",
+      }}
+      title="ENTRÉES"
+      balance={entreesBalance}
+      fcBalance={entreesFCDisplay}
+      color="card-entrees"
+    />
+    <Card
+      style={{
+        minWidth: "300px", // ✅ Increased width
+        flex: "0 0 auto",
+        fontFamily: "'JetBrains Mono', monospace",
+      }}
+      title="SORTIES"
+      balance={sortiesBalance}
+      fcBalance={sortiesFCDisplay}
+      color="card-sorties"
+    />
+  </div>
+</div>
+ 
+          {/* 👇 NEW: Remaining Balance Display */}
+ <h2 style={{ fontSize: "1.5rem", fontWeight: 600, color: "#111827" }}>
+                Ecarts
+              </h2>
           <div
+            className="remaining-balance-div"
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              marginTop: "20px",
+              padding: "20px",
+              backgroundColor: "#22c55e", // Green background for remaining balance
+              color: "#fff",
+              borderRadius: "16px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              textAlign: "center",
             }}
           >
-            <h2
-              style={{
-                color: "#111827",
-                fontSize: "1.5rem",
-                fontWeight: 600,
-              }}
-            >
-              Recent Transactions
-            </h2>
-            <button
-              onClick={() => setShowModal(true)}
-              style={{
-                padding: "8px 15px",
-                backgroundColor: "#10b981",
-                color: "#fff",
-                border: "none",
-                borderRadius: "8px",
-                fontWeight: 500,
-                cursor: "pointer",
-              }}
-            >
-              + Add Transaction
-            </button>
+           
+            <div style={{ display: "flex", justifyContent: "space-around", gap: "20px" }}>
+              <div style={{ flex: 1, borderRight: "1px solid rgba(255, 255, 255, 0.5)", paddingRight: "10px" }}>
+                <p style={{ fontSize: "1.1rem", fontWeight: 500, opacity: 0.9 }}>$</p>
+                <p style={{ fontSize: "1rem", fontWeight: 600 }}>
+                  {remainingDollars}
+                </p>
+              </div>
+              <div style={{ flex: 1, paddingLeft: "10px" }}>
+                <p style={{ fontSize: "1.1rem", fontWeight: 500, opacity: 0.9 }}>FC</p>
+                <p style={{ fontSize: "1rem", fontWeight: 600 }}>
+                  {remainingFC}
+                </p>
+              </div>
+            </div>
           </div>
+          {/* 👆 END: Remaining Balance Display */}
 
-          {/* Transaction List */}
-          <div
-            className="transaction-list"
-            style={{ overflowY: "auto", maxHeight: "300px" }}
-          >
-            {mockData.mockTransactions.map((tx) => (
-              <div
-                key={tx.id}
+          {/* Overview Charts Header */}
+          <div className="transactions-header" style={{ marginTop: "10px" }}>
+            <h2 style={{ fontSize: "1.5rem", fontWeight: 600, color: "#111827" }}>
+              Overview
+            </h2>
+          </div>
+          {/* ... Rest of the charts and table (unchanged) ... */}
+          
+         <div
+  className="chart-carousel"
+  style={{
+    display: "flex",
+    gap: "20px",
+    flexWrap: "nowrap",
+    overflowX: "auto",
+    marginTop: "15px",
+    paddingBottom: "10px",
+  }}
+>
+  {/* Dollars Chart */}
+  <div
+    className="card chart-card"
+    style={{
+      flex: "0 0 auto",
+      minWidth: "350px",
+      padding: "10px",
+      borderRadius: "16px",
+      backgroundColor: "#fff",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+    }}
+  >
+    <h3 style={{ color: "#374151", fontWeight: 600 }}>Dollars Summary</h3>
+    <Plot
+      data={[
+        {
+          x: ["Entrées", "Sorties"],
+          y: dollarsSum,
+          type: "bar",
+          marker: { color: "#4f46e5" },
+        },
+      ]}
+      layout={{
+        autosize: true,
+        margin: { t: 30, b: 50, l: 40, r: 20 },
+        xaxis: { title: "Channel", automargin: true },
+        yaxis: { title: "Amount ($)", automargin: true },
+        showlegend: false,
+        transition: { duration: 800, easing: "bounce" },
+      }}
+      style={{ width: "100%", height: "300px" }}
+      useResizeHandler
+      config={{ displayModeBar: false }}
+    />
+  </div>
+
+  {/* FC Chart */}
+  <div
+    className="card chart-card"
+    style={{
+      flex: "0 0 auto",
+     minWidth: "350px",
+      padding: "10px",
+      borderRadius: "16px",
+      backgroundColor: "#fff",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+    }}
+  >
+    <h3 style={{ color: "#374151", fontWeight: 600 }}>FC Summary</h3>
+    <Plot
+      data={[
+        {
+          x: ["Entrées", "Sorties"],
+          y: fcSum,
+          type: "bar",
+          marker: { color: "#f59e0b" },
+        },
+      ]}
+      layout={{
+        autosize: true,
+        margin: { t: 30, b: 50, l: 40, r: 20 },
+        xaxis: { title: "Channel", automargin: true },
+        yaxis: { title: "Amount (FC)", automargin: true },
+        showlegend: false,
+        transition: { duration: 800, easing: "bounce" },
+      }}
+      style={{ width: "100%", height: "300px" }}
+      useResizeHandler
+      config={{ displayModeBar: false }}
+    />
+  </div>
+</div>
+
+
+          {/* Transaction Table */}
+          <div style={{ marginTop: "20px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "15px",
+                marginBottom: "15px",
+              }}
+            >
+              <h2 style={{ fontSize: "1.6rem", fontWeight: 600, color: "#111827" }}>
+                Transaction Table
+              </h2>
+             
+            </div>
+
+            <div
+              style={{
+                overflowX: "auto",
+                backgroundColor: "#fff",
+                borderRadius: "5px",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              }}
+            >
+              <table
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "10px 0",
-                  borderBottom: "1px solid #e5e7eb",
-                  alignItems: "center",
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  minWidth: "700px",
                 }}
               >
-                <div>
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      color: "#1f2937",
-                    }}
-                  >
-                    {tx.motif}
-                  </div>
-                  <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                    {tx.date} | {tx.channel}
-                  </div>
-                </div>
-                <div
+                <thead
                   style={{
-                    fontWeight: 600,
-                    color:
-                      tx.channel === "Sorties" ? "#ef4444" : "#10b981",
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-end',
+                    position: "sticky",
+                    top: 0,
+                    backgroundColor: "#f9fafb",
+                    zIndex: 10,
                   }}
                 >
-                  {tx.channel === "Sorties" ? "-" : "+"}
-                  {tx.amount} {tx.currency}
-                  {tx.status === "Pending" && (
-                    <span style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 500 }}>
-                      (Pending)
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+                  <tr>
+                    {[
+                      "No",
+                      "Date",
+                    
+                      "Dollars",
+                      "FC",
+                      "Motif",
+                      "Channel",
+                      "File",
+                    ].map((header) => (
+                      <th
+                        key={header}
+                        style={{
+                          padding: "12px 15px",
+                          textAlign: "left",
+                          fontWeight: 600,
+                          color: "#fff",
+backgroundColor: "#111212ff",
+                          borderBottom: "1px solid #e5e7eb",
+                        }}
+                      >
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableData.map((tx, i) => (
+                    <tr
+                      key={tx.id || i}
+                      style={{
+                        borderBottom: "1px solid #f3f4f6",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#f3f4f6")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = "#fff")
+                      }
+                    >
+                      <td style={{ padding: "10px 15px" }}>{i + 1}</td>
+                      <td style={{ padding: "10px 15px" }}>
+                        {tx.date ? new Date(tx.date).toLocaleDateString('en-GB') : 'N/A'}
+                      </td>
+                      
+                      <td style={{ padding: "10px 15px" }}>
+  {tx.currency === "$" ? (Number(tx.amount) || 0).toFixed(2) : "0.00"}
+</td>
+<td style={{ padding: "10px 15px" }}>
+  {tx.currency === "FC" ? (Number(tx.amount) || 0).toFixed(2) : "0.00"}
+</td>
 
-      {/* Modal for adding transaction */}
+                      <td style={{ padding: "10px 15px" }}>{tx.motif}</td>
+                      <td
+                        style={{
+                          padding: "10px 15px",
+                          color: tx.channel === "Entrées" ? "#16a34a" : "#dc2626",
+                        }}
+                      >
+                        {tx.channel}
+                      </td>
+                      <td>
+  {tx.file ? (
+    <a href={tx.file} target="_blank" rel="noopener noreferrer">
+      View File
+    </a>
+  ) : "N/A"}
+</td>
+
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Main Add Transaction Modal */}
       {showModal && (
         <div
           className="modal-overlay"
@@ -648,7 +909,8 @@ export default function Dashboard() {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            zIndex: 9000,
+            zIndex: 9999,
+            padding: "15px",
           }}
         >
           <div
@@ -657,134 +919,132 @@ export default function Dashboard() {
             style={{
               backgroundColor: "#fff",
               borderRadius: "12px",
-              padding: "30px",
+              padding: "25px 30px",
               width: "100%",
               maxWidth: "500px",
-              boxShadow: "0 8px 30px rgba(0,0,0,0.25)",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "15px",
+              animation: "fadeIn 0.3s ease-out",
             }}
           >
-            <h2
+            <h3
               style={{
-                marginBottom: "20px",
+                fontSize: "1.5rem",
+                marginBottom: "10px",
                 color: "#111827",
-                borderBottom: "1px solid #e5e7eb",
-                paddingBottom: "10px",
               }}
             >
-              Add New Transaction
-            </h2>
+              Add Transaction
+            </h3>
             <form
-              onSubmit={handleShowConfirm}
-              style={{ display: "flex", flexDirection: "column", gap: "15px" }}
+              onSubmit={handleSubmit}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "15px",
+              }}
             >
-              {/* Date */}
-              <label style={{ fontWeight: 500, color: "#374151" }}>Date</label>
               <input
                 type="date"
                 name="date"
                 value={newTransaction.date}
-                onChange={handleInputChange}
-                required
-                style={{ padding: "10px", border: "1px solid #d1d5db", borderRadius: "8px" }}
+                onChange={handleChange}
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db' }}
               />
-
-              {/* Amount */}
-              <label style={{ fontWeight: 500, color: "#374151" }}>Amount</label>
               <input
                 type="number"
                 name="amount"
-                placeholder="e.g., 500.00"
+                placeholder="Amount"
                 value={newTransaction.amount}
-                onChange={handleInputChange}
-                required
-                min="0.01"
-                step="0.01"
-                style={{ padding: "10px", border: "1px solid #d1d5db", borderRadius: "8px" }}
+                onChange={handleChange}
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db' }}
               />
-
-              {/* Currency */}
-              <label style={{ fontWeight: 500, color: "#374151" }}>Currency</label>
               <select
                 name="currency"
                 value={newTransaction.currency}
-                onChange={handleInputChange}
-                required
-                style={{ padding: "10px", border: "1px solid #d1d5db", borderRadius: "8px" }}
+                onChange={handleChange}
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db' }}
               >
-                <option value="USD">USD</option>
-                <option value="MAD">MAD</option>
+                <option value="$">USD ($)</option>
                 <option value="FC">FC</option>
               </select>
-
-              {/* Channel */}
-              <label style={{ fontWeight: 500, color: "#374151" }}>Channel (Type)</label>
               <select
                 name="channel"
                 value={newTransaction.channel}
-                onChange={handleInputChange}
-                required
-                style={{ padding: "10px", border: "1px solid #d1d5db", borderRadius: "8px" }}
+                onChange={handleChange}
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db' }}
               >
-                <option value="Entrées">Entrées (Income)</option>
-                <option value="Sorties">Sorties (Expense - Requires Approval)</option>
+                <option value="Entrées">Entrées</option>
+                <option value="Sorties">Sorties</option>
               </select>
-
-              {/* Motif */}
-              <label style={{ fontWeight: 500, color: "#374151" }}>Motif (Description)</label>
               <input
                 type="text"
                 name="motif"
-                placeholder="e.g., Office Rent, Tithes"
+                placeholder="Motif (Description)"
                 value={newTransaction.motif}
-                onChange={handleInputChange}
-                required
-                style={{ padding: "10px", border: "1px solid #d1d5db", borderRadius: "8px" }}
+                onChange={handleChange}
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db' }}
               />
+              <input type="file" name="file" onChange={handleChange} style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
 
-              {/* File */}
-              <label style={{ fontWeight: 500, color: "#374151" }}>
-                Supporting File (Receipt/Invoice)
-              </label>
-              <input
-                type="file"
-                name="file"
-                onChange={handleFileChange}
-                style={{ padding: "10px", border: "1px solid #d1d5db", borderRadius: "8px" }}
-              />
-
-              <button
-                type="submit"
-                disabled={loading}
+              <div
                 style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "10px",
                   marginTop: "10px",
-                  padding: "12px 20px",
-                  backgroundColor: loading ? "#9ca3af" : "#10b981",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                  cursor: loading ? "not-allowed" : "pointer",
-                  transition: "background-color 0.2s",
                 }}
               >
-                {loading ? "Processing..." : "Submit Transaction"}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  style={{
+                    padding: "10px 20px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#fff")}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: "#4f46e5",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#4338ca")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#4f46e5")}
+                >
+                  Add
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* Confirmation Modal */}
+      {/* Confirmation Modal Render */}
       <ConfirmationModal
         isOpen={showConfirmModal}
-        message={`Are you sure you want to add this transaction? ${
-          newTransaction.channel.toLowerCase() === "sorties"
-            ? " (If 'Sorties', it will require Admin approval first.)"
-            : ""
-        }`}
-        onConfirm={handleAddTransaction}
+        message={confirmationMessage}
+        onConfirm={handleConfirmSubmit}
         onCancel={() => setShowConfirm(false)}
       />
+
+      {/* Success Banner Render */}
+      {showSuccessBanner && <SuccessToast message="Transaction added successfully! 🎉" />}
     </div>
   );
 }

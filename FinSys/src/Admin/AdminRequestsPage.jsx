@@ -9,41 +9,48 @@ const AdminRequestsPage = () => {
 
   // Fetch requests from backend
   const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/requests`);
-      const data = await response.json();
-      setRequests(data);
-    } catch (error) {
-      console.error("Error fetching requests:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const response = await fetch(`${API_BASE_URL}/transactions/pending`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}` // Add your JWT here
+      }
+    });
+    const data = await response.json();
+    setRequests(data);
+  } catch (error) {
+    console.error("Error fetching requests:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchRequests();
   }, []);
 
-  const handleAction = async (id, action) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/requests/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: action }),
-      });
+ const handleAction = async (id, action) => {
+  try {
+    const url = `${API_BASE_URL}/transactions/${id}/${action.toLowerCase()}`;
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      },
+    });
 
-      if (response.ok) {
-        setRequests((prev) =>
-          prev.map((req) =>
-            req.id === id ? { ...req, status: action } : req
-          )
-        );
-      }
-    } catch (error) {
-      console.error(`Error ${action} request:`, error);
+    if (response.ok) {
+      setRequests(prev =>
+        prev.map(req => (req.id === id ? { ...req, status: action } : req))
+      );
     }
-  };
+  } catch (error) {
+    console.error(`Error ${action} request:`, error);
+  }
+};
+
 
   return (
     <div className="admin-container">

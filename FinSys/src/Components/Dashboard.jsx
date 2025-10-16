@@ -217,6 +217,8 @@ const PendingPopup = ({ message, onClose }) => {
 };
 
 
+
+
 const Card = ({ title, balance, fcBalance, color }) => (
   <div
     className={`card ${color}`}
@@ -265,6 +267,8 @@ const Navbar = () => {
   };
 
   return (
+
+  
    <nav
   style={{
     position: "relative",
@@ -280,6 +284,8 @@ const Navbar = () => {
     borderBottomLeftRadius: "0.75rem",
     zIndex: 1000,
   }}
+
+
 >
   <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
     <span
@@ -480,26 +486,30 @@ const handleAddTransaction = async () => {
   }, [navigate]);
 
   // Update chart sums whenever tableData changes
- useEffect(() => {
-  const totalDollarsEntrees = tableData
-    .filter((tx) => tx.channel === "Entrées" && tx.currency === "$")
-    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+useEffect(() => {
+  // Filter only approved transactions
+  const approvedTx = tableData.filter(tx => tx.status === "Approved");
 
-  const totalDollarsSorties = tableData
-    .filter((tx) => tx.channel === "Sorties" && tx.currency === "$")
-    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  const totalDollarsEntrees = approvedTx
+    .filter(tx => tx.channel === "Entrées" && tx.currency === "$")
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
-  const totalFcEntrees = tableData
-    .filter((tx) => tx.channel === "Entrées" && tx.currency === "FC")
-    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  const totalDollarsSorties = approvedTx
+    .filter(tx => tx.channel === "Sorties" && tx.currency === "$")
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
-  const totalFcSorties = tableData
-    .filter((tx) => tx.channel === "Sorties" && tx.currency === "FC")
-    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  const totalFcEntrees = approvedTx
+    .filter(tx => tx.channel === "Entrées" && tx.currency === "FC")
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
-  setDollarsSum([totalDollarsEntrees, totalDollarsSorties]);
-  setFcSum([totalFcEntrees, totalFcSorties]);
+  const totalFcSorties = approvedTx
+    .filter(tx => tx.channel === "Sorties" && tx.currency === "FC")
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+
+  setDollarsSum([totalDollarsEntrees, totalDollarsSorties]);
+  setFcSum([totalFcEntrees, totalFcSorties]);
 }, [tableData]);
+
 
 
   const handleChange = (e) => {
@@ -896,52 +906,46 @@ backgroundColor: "#111212ff",
                   </tr>
                 </thead>
                 <tbody>
-                  {tableData.map((tx, i) => (
-                    <tr
-                      key={tx.id || i}
-                      style={{
-                        borderBottom: "1px solid #f3f4f6",
-                        transition: "background-color 0.2s",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#f3f4f6")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#fff")
-                      }
-                    >
-                      <td style={{ padding: "10px 15px" }}>{i + 1}</td>
-                      <td style={{ padding: "10px 15px" }}>
-                        {tx.date ? new Date(tx.date).toLocaleDateString('en-GB') : 'N/A'}
-                      </td>
-                      
-                      <td style={{ padding: "10px 15px" }}>
-  {tx.currency === "$" ? (Number(tx.amount) || 0).toFixed(2) : "0.00"}
-</td>
-<td style={{ padding: "10px 15px" }}>
-  {tx.currency === "FC" ? (Number(tx.amount) || 0).toFixed(2) : "0.00"}
-</td>
+  {tableData
+    .filter(tx => tx.status === "Approved") // Only show approved
+    .map((tx, i) => {
+      const paddingStyle = { padding: "10px 15px" };
+      const usdAmount = tx.currency === "$" ? (Number(tx.amount) || 0).toFixed(2) : "0.00";
+      const fcAmount = tx.currency === "FC" ? (Number(tx.amount) || 0).toFixed(2) : "0.00";
+      const channelColor = tx.channel === "Entrées" ? "#16a34a" : "#dc2626";
 
-                      <td style={{ padding: "10px 15px" }}>{tx.motif}</td>
-                      <td
-                        style={{
-                          padding: "10px 15px",
-                          color: tx.channel === "Entrées" ? "#16a34a" : "#dc2626",
-                        }}
-                      >
-                        {tx.channel}
-                      </td>
-                      <td>
-  {tx.file ? (
-    <a href={tx.file} target="_blank" rel="noopener noreferrer">
-      View File
-    </a>
-  ) : "N/A"}
-</td>
+      return (
+        <tr
+          key={tx.id || i}
+          style={{
+            borderBottom: "1px solid #f3f4f6",
+            transition: "background-color 0.2s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#fff")}
+        >
+          <td style={paddingStyle}>{i + 1}</td>
+          <td style={paddingStyle}>
+            {tx.date ? new Date(tx.date).toLocaleDateString("en-GB") : "N/A"}
+          </td>
+          <td style={paddingStyle}>{usdAmount}</td>
+          <td style={paddingStyle}>{fcAmount}</td>
+          <td style={paddingStyle}>{tx.motif || "N/A"}</td>
+          <td style={{ ...paddingStyle, color: channelColor }}>{tx.channel}</td>
+          <td style={paddingStyle}>
+            {tx.file ? (
+              <a href={tx.file} target="_blank" rel="noopener noreferrer">
+                View File
+              </a>
+            ) : (
+              "N/A"
+            )}
+          </td>
+        </tr>
+      );
+    })}
+</tbody>
 
-                    </tr>
-                  ))}
-                </tbody>
               </table>
             </div>
           </div>
@@ -1088,7 +1092,11 @@ backgroundColor: "#111212ff",
             </form>
           </div>
         </div>
+
+
       )}
+
+
       {/* Confirmation Modal Render */}
       <ConfirmationModal
         isOpen={showConfirmModal}
@@ -1099,6 +1107,14 @@ backgroundColor: "#111212ff",
 
       {/* Success Banner Render */}
       {showSuccessBanner && <SuccessToast message="Transaction added successfully! 🎉" />}
+
+{showPendingPopup && (
+   <PendingPopup
+     message={pendingMessage}
+     onClose={() => setShowPendingPopup(false)}
+   />
+)}
+
     </div>
   );
 }

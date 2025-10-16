@@ -163,6 +163,60 @@ const MessageBox = ({ message, onClose }) => (
   </div>
 );
 
+// --- Add this new popup component ---
+const PendingPopup = ({ message, onClose }) => {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0,0,0,0.5)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 20000,
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "#fff",
+          borderRadius: "12px",
+          padding: "30px 40px",
+          textAlign: "center",
+          maxWidth: "380px",
+          boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
+        }}
+      >
+        <h3 style={{ color: "#111827", fontWeight: "600", marginBottom: "10px" }}>
+          Transaction Pending
+        </h3>
+        <p style={{ color: "#4b5563", marginBottom: "25px" }}>{message}</p>
+        <button
+          onClick={onClose}
+          style={{
+            backgroundColor: "#3b82f6",
+            color: "#fff",
+            border: "none",
+            borderRadius: "8px",
+            padding: "10px 25px",
+            fontWeight: "500",
+            cursor: "pointer",
+            transition: "background 0.3s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#3b82f6")}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
 const Card = ({ title, balance, fcBalance, color }) => (
   <div
     className={`card ${color}`}
@@ -294,72 +348,72 @@ export default function Dashboard() {
 
 // Inside export default function Dashboard() { ... }
 
+const [showPendingPopup, setShowPendingPopup] = useState(false);
+const [pendingMessage, setPendingMessage] = useState("");
+
+// Replace handleAddTransaction:
 const handleAddTransaction = async () => {
-    setShowConfirm(false);
-    setErrorMessage(null);
-    setLoading(true);
+  setShowConfirm(false);
+  setErrorMessage(null);
+  setLoading(true);
 
-    const formData = new FormData();
-    formData.append("Date", newTransaction.date);
-    formData.append("Amount", newTransaction.amount);
-    formData.append("Currency", newTransaction.currency);
-    formData.append("Channel", newTransaction.channel);
-    formData.append("Motif", newTransaction.motif);
+  const formData = new FormData();
+  formData.append("Date", newTransaction.date);
+  formData.append("Amount", newTransaction.amount);
+  formData.append("Currency", newTransaction.currency);
+  formData.append("Channel", newTransaction.channel);
+  formData.append("Motif", newTransaction.motif);
+  if (newTransaction.file) {
+    formData.append("File", newTransaction.file);
+  }
 
-    // Append the file only if one was selected
-    if (newTransaction.file) {
-        formData.append("File", newTransaction.file);
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await axios.post(`${API_BASE_URL}/transactions`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // ✅ If the transaction requires admin approval (Sorties or Pending)
+    if (response.status === 202 || response.data.status === "Pending") {
+      setPendingMessage(
+        "Your transaction has been submitted and is awaiting admin approval. It will appear in your account once approved."
+      );
+      setShowPendingPopup(true);
+      // Do NOT add to local table until approved
+    } else {
+      // ✅ Add normally if it's an Entrée or instantly approved
+      setShowSuccessBanner(true);
+      setTimeout(() => setShowSuccessBanner(false), 5000);
+      fetchTransactions(currentUserId, token);
     }
 
-    try {
-        const token = localStorage.getItem("token");
-        const response = await axios.post(
-            `${API_BASE_URL}/transactions`,
-            formData,
-            {
-                headers: {
-                    // Important for file uploads
-                    "Content-Type": "multipart/form-data", 
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-
-        // 🔑 CORE LOGIC: Check for 202 Accepted status for Sorties transactions
-        if (response.status === 202 && newTransaction.channel.toLowerCase() === "sorties") {
-            setSuccessMessage(
-                "Sortie request sent successfully! Awaiting Admin approval. It will appear once approved."
-            );
-        } else {
-            // Standard success message for Entrées (Income) transactions (usually 200/201)
-            setSuccessMessage("Transaction added successfully!");
-        }
-        
-        setShowSuccessBanner(true);
-        setShowModal(false);
-        
-        // Reset the form data after successful submission
-        setNewTransaction({
-            date: new Date().toISOString().slice(0, 10),
-            amount: "",
-            currency: "USD",
-            channel: "Sorties",
-            motif: "",
-            file: null,
-        });
-
-    } catch (error) {
-        console.error("Error creating transaction:", error);
-        const msg =
-            error.response?.data?.Message ||
-            "An error occurred while adding the transaction.";
-        setErrorMessage(msg);
-    } finally {
-        setLoading(false);
-        // Hide success message after 5 seconds
-        setTimeout(() => setShowSuccessBanner(false), 5000);
-    }
+    // Reset form and close modal
+    setShowModal(false);
+    setNewTransaction({
+      date: new Date().toISOString().slice(0, 10),
+      amount: "",
+      currency: "$",
+      channel: "Entrées",
+      motif: "",
+      file: null,
+      userID: currentUserId,
+    });
+  } catch (error) {
+    console.error("Error creating transaction:", error);
+    setErrorMessage(
+      error.response?.data?.Message ||
+        "An error occurred while adding the transaction."
+    );
+  } finally {
+    setLoading(false);
+  }
 };
+
+
   const [dollarsSum, setDollarsSum] = useState([0, 0]); // [Entrees, Sorties]
   const [fcSum, setFcSum] = useState([0, 0]); // [Entrees, Sorties]
 

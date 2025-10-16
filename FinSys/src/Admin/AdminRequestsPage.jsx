@@ -7,6 +7,8 @@ const AdminRequestsPage = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const token = localStorage.getItem("token");
+
   // Fetch requests from backend
   const fetchRequests = async () => {
   try {

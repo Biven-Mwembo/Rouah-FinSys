@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./SignUp.css";
 
+// ✅ Your backend API
+const API_BASE_URL = "https://finsys.onrender.com/api";
+
 export default function SignUp() {
   const navigate = useNavigate();
 
@@ -14,12 +17,13 @@ export default function SignUp() {
     address: "",
     password: "",
     photo: null,
+    // Note: Role is omitted from the form for standard user signup
   });
 
   const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");         // ✅ new state
-  const [messageType, setMessageType] = useState(""); // ✅ success or error
+  const [message, setMessage] = useState("");      
+  const [messageType, setMessageType] = useState(""); // success or error
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -35,6 +39,8 @@ export default function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setMessageType("");
     setLoading(true);
 
     try {
@@ -43,46 +49,44 @@ export default function SignUp() {
       payload.append("surname", formData.surname);
 
       if (formData.dob) {
+        // Send DOB in ISO format as required by the backend
         payload.append("dob", new Date(formData.dob).toISOString());
       }
 
       payload.append("email", formData.email);
-      payload.append("address", formData.address);
+      payload.append("address", formData.address || ""); 
       payload.append("password", formData.password);
 
       if (formData.photo) payload.append("photo", formData.photo);
+      // NOTE: Role is not set in the form, so it defaults to "user" on the backend.
 
+      // 🏆 CRITICAL UPDATE: Call the new Auth/register endpoint
       const response = await axios.post(
-        "https://finsys.onrender.com/api/Users",
+        `${API_BASE_URL}/Auth/register`, 
         payload,
         {
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
 
-      setMessage("User created successfully!");
+      setMessage("Registration successful. Redirecting to login...");
       setMessageType("success");
       console.log(response.data);
 
-      setFormData({
-        name: "",
-        surname: "",
-        dob: "",
-        email: "",
-        address: "",
-        password: "",
-        photo: null,
-      });
-      setPhotoPreview(null);
-
-      // Redirect after 2 seconds
+      // Redirect to login page after 2 seconds
       setTimeout(() => {
         navigate("/");
       }, 2000);
 
     } catch (error) {
-      console.error(error);
-      setMessage("Error creating user. Please try again.");
+      console.error("Registration Error:", error.response || error);
+      
+      const errorMessage =
+        error.response?.data?.message || 
+        error.response?.data?.details || 
+        "Error creating user. Please check all fields and try again.";
+        
+      setMessage(errorMessage);
       setMessageType("error");
     } finally {
       setLoading(false);
@@ -115,7 +119,7 @@ export default function SignUp() {
                 name={field}
                 value={formData[field]}
                 onChange={handleChange}
-                required={field === "name" || field === "surname"}
+                required={field === "name" || field === "surname" || field === "email"}
                 className="form-input"
                 placeholder=" "
               />

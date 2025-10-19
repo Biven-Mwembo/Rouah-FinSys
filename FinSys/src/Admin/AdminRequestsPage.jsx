@@ -18,7 +18,7 @@ const fetchRequests = async () => {
         setLoading(true);
         const response = await fetch(`${API_BASE_URL}/transactions/pending`, {
             headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`
+               headers: { Authorization: `Bearer ${token}` },
             }
         });
         

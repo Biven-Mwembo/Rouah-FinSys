@@ -14,29 +14,32 @@ const AdminRequestsPage = () => {
 
 // Proposed (Improved) Logic:
 const fetchRequests = async () => {
-    try {
-        setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/transactions/pending`, {
-            headers: {
-               headers: { Authorization: `Bearer ${token}` },
-            }
-        });
-        
-        // 🌟 ADD THIS CHECK 🌟
-        if (!response.ok) {
-            // Attempt to read the error body if it exists, otherwise just throw the status
-            const errorBody = await response.text(); 
-            throw new Error(`HTTP error! Status: ${response.status}. Message: ${errorBody || response.statusText}`);
-        }
-        
-        const data = await response.json();
-        setRequests(data);
-    } catch (error) {
-        console.error("Error fetching requests:", error);
-    } finally {
-        setLoading(false);
+  try {
+    setLoading(true);
+
+    const response = await fetch(`${API_BASE_URL}/transactions/pending`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `HTTP error! Status: ${response.status}. Message: ${errorBody || response.statusText}`
+      );
     }
+
+    const data = await response.json();
+    setRequests(data);
+  } catch (error) {
+    console.error("Error fetching requests:", error);
+  } finally {
+    setLoading(false);
+  }
 };
+
 
 
   useEffect(() => {

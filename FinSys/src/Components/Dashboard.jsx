@@ -355,15 +355,7 @@ export default function Dashboard() {
   const [showPendingPopup, setShowPendingPopup] = useState(false);
   const [pendingMessage, setPendingMessage] = useState("");
 
-  // I'm keeping the original handleAddTransaction from your snippet, but the logic
-  // in handleConfirmSubmit is what is actually executed when the ConfirmationModal's
-  // "Confirm Add" button is clicked. Let's make sure handleConfirmSubmit is correct.
-  // I will comment out the function you sent previously to avoid redundancy, as it's not called directly.
-  /* const handleAddTransaction = async () => {
-    // ... (Your previous handleAddTransaction logic is here, but it seems to be unused 
-    // since handleSubmit calls setShowConfirm, which leads to handleConfirmSubmit)
-  }
-  */
+  
 
   const [dollarsSum, setDollarsSum] = useState([0, 0]); // [Entrees, Sorties]
   const [fcSum, setFcSum] = useState([0, 0]); // [Entrees, Sorties]
@@ -482,7 +474,7 @@ export default function Dashboard() {
     formData.append("Currency", newTransaction.currency);
     formData.append("Channel", newTransaction.channel);
     formData.append("Motif", newTransaction.motif || "N/A");
-    formData.append("User_Id", currentUserId);
+    formData.append("user_Id", currentUserId);
     if (newTransaction.file) {
       formData.append("File", newTransaction.file);
     }

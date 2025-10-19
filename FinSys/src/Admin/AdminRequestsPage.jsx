@@ -176,7 +176,7 @@ const AdminRequestsPage = () => {
                                 {requests.map((tx, i) => (
                                     <tr key={tx.id || i}>
                                         <td>{i + 1}</td>
-                                        <td>{tx.user ? `${tx.UserDetails?.name} ${tx.UserDetails?.surname}` : "N/A"}</td>
+                                        <td>{tx.user ? `${tx.user.name} ${tx.user.surname}` : "N/A"}</td>
                                         <td>{tx.date ? new Date(tx.date).toLocaleDateString("en-GB") : "N/A"}</td>
                                         <td>{tx.currency === "$" ? (Number(tx.amount) || 0).toFixed(2) : "0.00"}</td>
                                         <td>{tx.currency === "FC" ? (Number(tx.amount) || 0).toFixed(2) : "0.00"}</td>

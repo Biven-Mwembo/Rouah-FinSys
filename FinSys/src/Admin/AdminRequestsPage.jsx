@@ -10,62 +10,78 @@ const AdminRequestsPage = () => {
   const token = localStorage.getItem("token");
 
   // Fetch requests from backend
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
 
+      const response = await fetch(`${API_BASE_URL}/transactions/pending`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
 
-// Proposed (Improved) Logic:
-const fetchRequests = async () => {
-  try {
-    setLoading(true);
-
-    const response = await fetch(`${API_BASE_URL}/transactions/pending`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(
+          `HTTP error! Status: ${response.status}. Message: ${errorBody || response.statusText}`
+        );
       }
-    });
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(
-        `HTTP error! Status: ${response.status}. Message: ${errorBody || response.statusText}`
-      );
+      const data = await response.json();
+      setRequests(data);
+    } catch (error) {
+      console.error("Error fetching requests:", error);
+      alert(`Failed to load requests. Please check the network and try again. Details: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-
-    const data = await response.json();
-    setRequests(data);
-  } catch (error) {
-    console.error("Error fetching requests:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  };
 
   useEffect(() => {
     fetchRequests();
   }, []);
 
- const handleAction = async (id, action) => {
-  try {
-    const url = `${API_BASE_URL}/transactions/${id}/${action.toLowerCase()}`;
-    const response = await fetch(url, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      },
-    });
-
-    if (response.ok) {
-      setRequests(prev =>
-        prev.map(req => (req.id === id ? { ...req, status: action } : req))
-      );
+  // 🛠️ UPDATED FUNCTION with Confirmation and Notifications
+  const handleAction = async (id, action) => {
+    // 1. Prompt User Confirmation
+    const confirmationMessage = `Are you sure you want to ${action.toLowerCase()} this transaction?`;
+    if (!window.confirm(confirmationMessage)) {
+      return; // Stop the function if the user cancels
     }
-  } catch (error) {
-    console.error(`Error ${action} request:`, error);
-  }
-};
+
+    try {
+      // Assuming your backend uses /approved and /declined routes (as per previous fix)
+      const url = `${API_BASE_URL}/transactions/${id}/${action.toLowerCase()}`;
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+      });
+
+      if (response.ok) {
+        // 2. Update Frontend State on Success
+        setRequests(prev =>
+          prev.map(req => (req.id === id ? { ...req, status: action } : req))
+        );
+        
+        // 3. Notify User of Success
+        alert(`✅ Transaction successfully ${action.toLowerCase()}.`);
+
+      } else {
+        // Handle API errors (e.g., 404, 400, etc.)
+        const errorText = await response.text();
+        throw new Error(`Status: ${response.status}. Message: ${errorText || response.statusText}`);
+      }
+    } catch (error) {
+      console.error(`Error ${action} request:`, error);
+      
+      // 4. Notify User of Failure
+      alert(`❌ Failed to ${action.toLowerCase()} the request. Details: ${error.message}`);
+    }
+  };
 
 
   return (
@@ -94,7 +110,7 @@ const fetchRequests = async () => {
                 </tr>
               </thead>
               <tbody>
-                {requests.map((tx, i) => (
+                {requests.filter(tx => tx.status === "Pending").map((tx, i) => ( // 💡 Filter to only show 'Pending' requests here
                   <tr key={tx.id || i}>
                     <td>{i + 1}</td>
                     <td>{tx.date ? new Date(tx.date).toLocaleDateString("en-GB") : "N/A"}</td>

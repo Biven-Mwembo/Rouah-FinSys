@@ -6,7 +6,7 @@ import Plot from "react-plotly.js";
 const API_BASE_URL = "https://finsys.onrender.com/api";
 
 // --- START: Internal Components (Unchanged) ---
-const [successMessage, setSuccessMessage] = useState("");
+
 
 // ... (SuccessToast, ConfirmationModal, MessageBox, PendingPopup, Card, Navbar components remain unchanged)
 const SuccessToast = ({ message }) => {

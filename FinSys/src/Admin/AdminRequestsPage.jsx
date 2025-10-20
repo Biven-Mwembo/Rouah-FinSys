@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./AdminLayout.css";
+import "./AdminRequests.css";
 
 const API_BASE_URL = "https://finsys.onrender.com/api";
 

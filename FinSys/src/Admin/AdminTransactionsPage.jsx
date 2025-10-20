@@ -8,11 +8,12 @@ const formatDate = (dateString) => {
     if (!dateString) return "-";
     try {
         const date = new Date(dateString);
-        return new Intl.DateTimeFormat('en-GB', {
-            year: '2-digit',
+        // Using 'sv-SE' format to reliably get YYYY-MM-DD for date inputs
+        return new Intl.DateTimeFormat('en-CA', {
+            year: 'numeric',
             month: '2-digit',
             day: '2-digit',
-        }).format(date);
+        }).format(date).replace(/-/g, '/'); // Format for display
     } catch (e) {
         return dateString.split('T')[0] || dateString;
     }
@@ -22,7 +23,8 @@ export default function AdminTransactionsPage() {
     const [transactions, setTransactions] = useState([]);
     const [users, setUsers] = useState([]);
     const [banner, setBanner] = useState({ message: "", type: "" });
-    const [editingTx, setEditingTx] = useState(null);
+    const [editingTx, setEditingTx] = useState(null); // Controls Edit Modal
+    const [confirmDeleteTxId, setConfirmDeleteTxId] = useState(null); // Controls Delete Modal
 
     const token = localStorage.getItem("token");
 
@@ -46,7 +48,6 @@ export default function AdminTransactionsPage() {
             })
             .then((data) => {
                 const mappedData = data.map(tx => {
-                    // tx.user is the property returned by the Supabase join on the 'user' table
                     const userObj = tx.user || tx.userDetails || tx.users; 
                     
                     // Re-calculate fullName for display
@@ -95,9 +96,10 @@ export default function AdminTransactionsPage() {
         fetchAllUsers();
     }, []);
 
-    // --- (Keep your existing edit, update, delete functions as they are) ---
+    // --- EDIT HANDLERS ---
     const handleEdit = (transaction) => {
-        const dateValue = transaction.date ? transaction.date.split('T')[0] : '';
+        // Convert date string to YYYY-MM-DD format for input[type=date]
+        const dateValue = transaction.date ? new Date(transaction.date).toISOString().split('T')[0] : '';
         setEditingTx({ ...transaction, date: dateValue });
     };
 
@@ -150,28 +152,49 @@ export default function AdminTransactionsPage() {
             setTimeout(() => setBanner({ message: "", type: "" }), 4000);
         }
     };
+    
+    // --- DELETE HANDLERS ---
+    const confirmDelete = (id) => {
+        setConfirmDeleteTxId(id); // Show modal for this ID
+    };
 
+    const cancelDelete = () => {
+        setConfirmDeleteTxId(null); // Hide modal
+    };
+    
     const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this transaction?")) return;
+        // Hide the modal immediately after confirmation
+        setConfirmDeleteTxId(null); 
+
         try {
-            const res = await fetch(`${API_BASE_URL}/transactions/${id}`, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) {
+            // Use axios.delete for consistent error handling and clarity
+            const res = await axios.delete(
+                `${API_BASE_URL}/transactions/${id}`,
+                {
+                    headers: { 
+                        Authorization: `Bearer ${token}` 
+                    },
+                }
+            );
+
+            if (res.status === 204 || res.status === 200 || res.status === 202) {
                 setBanner({ message: "🗑️ Transaction deleted successfully!", type: "success" });
-                setTransactions(prev => prev.filter(tx => tx.id !== id));
+                // Optimistically remove from state
+                setTransactions(prev => prev.filter(tx => tx.id !== id)); 
             } else {
-                const errorText = await res.text();
-                throw new Error(errorText || res.statusText || "Failed to delete transaction.");
+                 throw new Error("Failed to delete transaction with an unexpected response.");
             }
         } catch (error) {
-            setBanner({ message: `❌ Error deleting: ${error.message}`, type: "error" });
+            const errorMessage = error.response?.data?.message ||
+                error.message || 
+                "Failed to delete transaction. Please check API/database logs.";
+            setBanner({ message: `❌ Error deleting: ${errorMessage}`, type: "error" });
         } finally {
             setTimeout(() => setBanner({ message: "", type: "" }), 4000);
         }
     };
 
+    // --- RENDER ---
     return (
         <div className="transactions-container">
             {banner.message && (
@@ -179,22 +202,116 @@ export default function AdminTransactionsPage() {
                     {banner.message}
                 </div>
             )}
-
-            <h1>Admin Transaction Management</h1>
             
+            <h1>Admin Transaction Management</h1>
+
+            {/* 📝 EDIT TRANSACTION MODAL */}
+            {editingTx && (
+                <div className="modal-overlay">
+                    <form onSubmit={handleUpdate} className="edit-form modal-content">
+                        <h3>Edit Transaction #{editingTx.id}</h3>
+                        
+                        <label>
+                            Date:
+                            <input
+                                type="date"
+                                name="date"
+                                value={editingTx.date}
+                                onChange={handleEditChange}
+                                required
+                            />
+                        </label>
+                        <label>
+                            Amount:
+                            <input
+                                type="number"
+                                name="amount"
+                                value={editingTx.amount}
+                                onChange={handleEditChange}
+                                step="0.01"
+                                required
+                            />
+                        </label>
+                        <label>
+                            Currency:
+                            <input
+                                type="text"
+                                name="currency"
+                                value={editingTx.currency}
+                                onChange={handleEditChange}
+                                required
+                            />
+                        </label>
+                        <label>
+                            Channel:
+                            <input
+                                type="text"
+                                name="channel"
+                                value={editingTx.channel}
+                                onChange={handleEditChange}
+                                required
+                            />
+                        </label>
+                        <label>
+                            Motif:
+                            <input
+                                type="text"
+                                name="motif"
+                                value={editingTx.motif}
+                                onChange={handleEditChange}
+                                required
+                            />
+                        </label>
+                        <div className="form-actions">
+                            <button type="submit" className="action-btn save-btn">Save Changes</button>
+                            <button type="button" onClick={handleCancelEdit} className="action-btn cancel-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* 🗑️ DELETE CONFIRMATION MODAL */}
+            {confirmDeleteTxId && (
+                <div className="modal-overlay">
+                    <div className="confirm-modal modal-content">
+                        <span className="warning-icon">⚠️</span>
+                        <h3>Confirm Deletion</h3>
+                        <p>
+                            Are you sure you want to permanently delete transaction 
+                            <strong> #{confirmDeleteTxId}</strong>? 
+                            This action cannot be undone.
+                        </p>
+                        <div className="form-actions">
+                            <button 
+                                className="action-btn delete-confirm-btn" 
+                                onClick={() => handleDelete(confirmDeleteTxId)} 
+                            >
+                                Yes, Delete
+                            </button>
+                            <button 
+                                type="button" 
+                                className="action-btn cancel-btn" 
+                                onClick={cancelDelete} 
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {/* Existing Transactions Table */}
             <div className="card">
                 <div className="table-header">
                     <h2>All Transactions</h2>
-
                 </div>
 
                 <div className="table-responsive">
                     <table className="transactions-table admin-table">
                         <thead>
                             <tr>
-                                <th>User</th> {/* Changed header back to User */}
+                                <th>User</th>
                                 <th>Date</th>
                                 <th>Amount</th>
                                 <th>Currency</th>
@@ -208,7 +325,6 @@ export default function AdminTransactionsPage() {
                             {transactions.length > 0 ? (
                                 transactions.map((tx) => (
                                     <tr key={tx.id}>
-                                        {/* Display tx.userName (Full Name or "Unknown User") */}
                                         <td><strong>{tx.userName}</strong></td> 
                                         <td>{formatDate(tx.date)}</td>
                                         <td>{tx.amount}</td>
@@ -218,7 +334,7 @@ export default function AdminTransactionsPage() {
                                         <td>{tx.file ? <a href={tx.file} target="_blank" rel="noopener noreferrer">View</a> : "-"}</td>
                                         <td>
                                             <button className="action-btn edit-btn" onClick={() => handleEdit(tx)}>Edit</button>
-                                            <button className="action-btn delete-btn" onClick={() => handleDelete(tx.id)}>Delete</button>
+                                            <button className="action-btn delete-btn" onClick={() => confirmDelete(tx.id)}>Delete</button>
                                         </td>
                                     </tr>
                                 ))
@@ -230,84 +346,19 @@ export default function AdminTransactionsPage() {
                 </div>
             </div>
 
-            // Add this Edit Form block to your return statement, preferably after the banner but before the tables.
-
-{editingTx && (
-    <div className="edit-modal">
-        <form onSubmit={handleUpdate} className="edit-form">
-            <h3>Edit Transaction #{editingTx.id}</h3>
-            <label>
-                Date:
-                <input
-                    type="date"
-                    name="date"
-                    value={editingTx.date}
-                    onChange={handleEditChange}
-                    required
-                />
-            </label>
-            <label>
-                Amount:
-                <input
-                    type="number"
-                    name="amount"
-                    value={editingTx.amount}
-                    onChange={handleEditChange}
-                    step="0.01"
-                    required
-                />
-            </label>
-            <label>
-                Currency:
-                <input
-                    type="text"
-                    name="currency"
-                    value={editingTx.currency}
-                    onChange={handleEditChange}
-                    required
-                />
-            </label>
-            <label>
-                Channel:
-                <input
-                    type="text"
-                    name="channel"
-                    value={editingTx.channel}
-                    onChange={handleEditChange}
-                    required
-                />
-            </label>
-            <label>
-                Motif:
-                <input
-                    type="text"
-                    name="motif"
-                    value={editingTx.motif}
-                    onChange={handleEditChange}
-                    required
-                />
-            </label>
-            <div className="form-actions">
-                <button type="submit" className="save-btn">Save Changes</button>
-                <button type="button" onClick={handleCancelEdit} className="cancel-btn">Cancel</button>
-            </div>
-        </form>
-    </div>
-)}
-
-            {/* ✅ NEW USERS TABLE */}
+            {/* All Registered Users Table (Unchanged logic) */}
             <div className="card" style={{ marginTop: "2rem" }}>
                 <div className="table-header">
                     <h2>All Registered Users</h2>
                 </div>
-
+                {/* ... Users table JSX (no change needed) ... */}
                 <div className="table-responsive">
                     <table className="transactions-table admin-table">
                         <thead>
                             <tr>
-                                <th>User ID</th> {/* Corrected Header */}
-                                <th>Nom</th>     {/* Corrected Header */}
-                                <th>Post-Nom</th> {/* Corrected Header */}
+                                <th>User ID</th> 
+                                <th>Nom</th>    
+                                <th>Post-Nom</th> 
                                 <th>Email</th>
                                 <th>Address</th>
                                 <th>Date de Naissance</th>
@@ -317,7 +368,6 @@ export default function AdminTransactionsPage() {
                             {users.length > 0 ? (
                                 users.map((user) => (
                                     <tr key={user.id}>
-                                        {/* Corrected logic for Users table */}
                                         <td><strong>{user.id}</strong></td> 
                                         <td>{user.name}</td>
                                         <td>{user.surname}</td>

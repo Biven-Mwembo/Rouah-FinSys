@@ -8,7 +8,7 @@ const formatDate = (dateString) => {
     if (!dateString) return "-";
     try {
         const date = new Date(dateString);
-        // Using 'sv-SE' format to reliably get YYYY-MM-DD for date inputs
+        // Using 'en-CA' format for YYYY-MM-DD
         return new Intl.DateTimeFormat('en-CA', {
             year: 'numeric',
             month: '2-digit',
@@ -126,7 +126,8 @@ export default function AdminTransactionsPage() {
         };
 
         try {
-            const res = await axios.put(
+            // ***CRITICAL FIX: Changed axios.put to axios.patch***
+            const res = await axios.patch(
                 `${API_BASE_URL}/transactions/${id}`,
                 updateData,
                 {
@@ -182,7 +183,7 @@ export default function AdminTransactionsPage() {
                 // Optimistically remove from state
                 setTransactions(prev => prev.filter(tx => tx.id !== id)); 
             } else {
-                 throw new Error("Failed to delete transaction with an unexpected response.");
+                throw new Error("Failed to delete transaction with an unexpected response.");
             }
         } catch (error) {
             const errorMessage = error.response?.data?.message ||
@@ -357,8 +358,8 @@ export default function AdminTransactionsPage() {
                         <thead>
                             <tr>
                                 <th>User ID</th> 
-                                <th>Nom</th>    
-                                <th>Post-Nom</th> 
+                                <th>Nom</th>   
+                                <th>Post-Nom</th>
                                 <th>Email</th>
                                 <th>Address</th>
                                 <th>Date de Naissance</th>

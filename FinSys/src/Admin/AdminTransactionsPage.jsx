@@ -202,7 +202,7 @@ export default function AdminTransactionsPage() {
                             {transactions.length > 0 ? (
                                 transactions.map((tx) => (
                                     <tr key={tx.id}>
-                                        <td><strong>{tx.userName}</strong></td>
+                                        <td><strong>{tx.user_id}</strong></td>
                                         <td>{formatDate(tx.date)}</td>
                                         <td>{tx.amount}</td>
                                         <td>{tx.currency}</td>
@@ -233,17 +233,19 @@ export default function AdminTransactionsPage() {
                     <table className="transactions-table admin-table">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Surname</th>
+                                <th>USER_ID</th>
+                                <th>Nom</th>
+                                <th>Post-Nom</th>
                                 <th>Email</th>
                                 <th>Address</th>
-                                <th>Date of Birth</th>
+                                <th>Date de Naissance</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.length > 0 ? (
                                 users.map((user) => (
                                     <tr key={user.id}>
+                                        <td><strong>{user.id}</strong></td>
                                         <td>{user.name}</td>
                                         <td>{user.surname}</td>
                                         <td>{user.email}</td>

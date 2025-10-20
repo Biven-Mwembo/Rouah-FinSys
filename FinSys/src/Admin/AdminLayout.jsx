@@ -5,13 +5,14 @@ import "./AdminLayout.css";
 
 const AdminLayout = () => {
   return (
-    <div className="flex bg-gray-50 min-h-screen">
-      {/* Sidebar is fixed, so main content needs padding-left */}
+    <div className="admin-layout">
       <AdminSidebar />
-      <main className="flex-1 p-8 overflow-y-auto ml-64">
-  <Outlet />
-</main>
 
+      <main className="admin-main">
+        <div className="admin-content">
+          <Outlet />
+        </div>
+      </main>
     </div>
   );
 };

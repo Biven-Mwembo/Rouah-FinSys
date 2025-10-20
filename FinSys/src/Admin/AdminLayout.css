@@ -7,7 +7,7 @@
 /* main content */
 .admin-main {
   flex: 1;
-  padding: 1rem;
+  padding: 0.5rem;
   overflow-y: auto;
   margin-left: 250px; /* space for sidebar */
   transition: margin-left 0.3s ease;

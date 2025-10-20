@@ -230,6 +230,71 @@ export default function AdminTransactionsPage() {
                 </div>
             </div>
 
+            // Add this Edit Form block to your return statement, preferably after the banner but before the tables.
+
+{editingTx && (
+    <div className="edit-modal">
+        <form onSubmit={handleUpdate} className="edit-form">
+            <h3>Edit Transaction #{editingTx.id}</h3>
+            <label>
+                Date:
+                <input
+                    type="date"
+                    name="date"
+                    value={editingTx.date}
+                    onChange={handleEditChange}
+                    required
+                />
+            </label>
+            <label>
+                Amount:
+                <input
+                    type="number"
+                    name="amount"
+                    value={editingTx.amount}
+                    onChange={handleEditChange}
+                    step="0.01"
+                    required
+                />
+            </label>
+            <label>
+                Currency:
+                <input
+                    type="text"
+                    name="currency"
+                    value={editingTx.currency}
+                    onChange={handleEditChange}
+                    required
+                />
+            </label>
+            <label>
+                Channel:
+                <input
+                    type="text"
+                    name="channel"
+                    value={editingTx.channel}
+                    onChange={handleEditChange}
+                    required
+                />
+            </label>
+            <label>
+                Motif:
+                <input
+                    type="text"
+                    name="motif"
+                    value={editingTx.motif}
+                    onChange={handleEditChange}
+                    required
+                />
+            </label>
+            <div className="form-actions">
+                <button type="submit" className="save-btn">Save Changes</button>
+                <button type="button" onClick={handleCancelEdit} className="cancel-btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+)}
+
             {/* ✅ NEW USERS TABLE */}
             <div className="card" style={{ marginTop: "2rem" }}>
                 <div className="table-header">

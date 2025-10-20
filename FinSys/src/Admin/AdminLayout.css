@@ -21,5 +21,256 @@
   }
 }
 /* In AdminLayout.css */
+/* ==========================
+   GLOBAL CONTAINER + CARD
+========================== */
+.admin-container {
+  width: 100%;
+  padding: 2rem;
+  margin-left: 250px;
+  background: #f9fafb;
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  margin-top: 1.5rem;
+}
+
+h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.75rem;
+}
+
+p.loading {
+  text-align: center;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+/* ==========================
+   TABLE STYLING
+========================== */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  margin-top: 1rem;
+}
+
+.requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.requests-table th,
+.requests-table td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.95rem;
+}
+
+.requests-table thead {
+  background: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+}
+
+.requests-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.requests-table tbody td {
+  color: #111827;
+}
+
+/* ==========================
+   CHANNEL + STATUS STYLING
+========================== */
+.channel.green {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.channel.red {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.status {
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #2563eb;
+}
+
+/* ==========================
+   BUTTONS
+========================== */
+.btn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn.approve {
+  background: #2563eb;
+  color: #fff;
+  margin-right: 0.4rem;
+}
+
+.btn.approve:hover {
+  background: #1e40af;
+}
+
+.btn.decline {
+  background: #dc2626;
+  color: #fff;
+}
+
+.btn.decline:hover {
+  background: #b91c1c;
+}
+
+/* ==========================
+   MODAL OVERLAY
+========================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 2rem;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.modal-content h3 {
+  margin-bottom: 0.75rem;
+  color: #111827;
+  font-size: 1.25rem;
+}
+
+.modal-content p {
+  color: #6b7280;
+  margin-bottom: 1.25rem;
+}
+
+/* ==========================
+   TOAST NOTIFICATION
+========================== */
+.toast {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  transform: translateX(120%);
+  opacity: 0;
+  transition: all 0.35s ease;
+  z-index: 1001;
+}
+
+.toast.success {
+  background: #16a34a;
+}
+
+.toast.error {
+  background: #dc2626;
+}
+
+.toast.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* ==========================
+   MOBILE RESPONSIVENESS
+========================== */
+@media (max-width: 1024px) {
+  .admin-container {
+    margin-left: 0;
+    padding-bottom: 80px;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .requests-table {
+    min-width: 100%;
+  }
+
+  .requests-table th,
+  .requests-table td {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .requests-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .requests-table th,
+  .requests-table td {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  .btn {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+  }
+
+  .modal-content {
+    width: 85%;
+    padding: 1.5rem;
+  }
+
+  .toast {
+    bottom: 10px;
+    right: 10px;
+    font-size: 0.85rem;
+  }
+}
 
 

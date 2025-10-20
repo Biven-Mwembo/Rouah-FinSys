@@ -209,7 +209,7 @@ export default function AdminTransactionsPage() {
                                 transactions.map((tx) => (
                                     <tr key={tx.id}>
                                         {/* Display tx.userName (Full Name or "Unknown User") */}
-                                        <td><strong>{tx.userName}</strong></td> 
+                                        <td><strong>{user.name}</strong></td> 
                                         <td>{formatDate(tx.date)}</td>
                                         <td>{tx.amount}</td>
                                         <td>{tx.currency}</td>

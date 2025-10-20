@@ -20,7 +20,7 @@ const formatDate = (dateString) => {
 
 export default function AdminTransactionsPage() {
     const [transactions, setTransactions] = useState([]);
-    const [users, setUsers] = useState([]); // ✅ NEW: Users state
+    const [users, setUsers] = useState([]);
     const [banner, setBanner] = useState({ message: "", type: "" });
     const [editingTx, setEditingTx] = useState(null);
 
@@ -46,11 +46,17 @@ export default function AdminTransactionsPage() {
             })
             .then((data) => {
                 const mappedData = data.map(tx => {
-                    const userObj = tx.userDetails || tx.user_id || tx.users;
-                    const fullName = userObj ? `${userObj.name || ''} ${userObj.surname || ''}`.trim() : "Unknown User";
+                    // tx.user is the property returned by the Supabase join on the 'user' table
+                    const userObj = tx.user || tx.userDetails || tx.users; 
+                    
+                    // Re-calculate fullName for display
+                    const fullName = userObj 
+                        ? `${userObj.name || ''} ${userObj.surname || ''}`.trim() 
+                        : tx.user_id || "Unknown User"; 
+                        
                     return {
                         ...tx,
-                        userName: fullName,
+                        userName: fullName, // Ensure this field contains the full name
                     };
                 });
                 setTransactions(mappedData);
@@ -86,7 +92,7 @@ export default function AdminTransactionsPage() {
 
     useEffect(() => {
         fetchAllTransactions();
-        fetchAllUsers(); // ✅ NEW: Load users on mount
+        fetchAllUsers();
     }, []);
 
     // --- (Keep your existing edit, update, delete functions as they are) ---
@@ -188,7 +194,7 @@ export default function AdminTransactionsPage() {
                     <table className="transactions-table admin-table">
                         <thead>
                             <tr>
-                                <th>User</th>
+                                <th>User</th> {/* Changed header back to User */}
                                 <th>Date</th>
                                 <th>Amount</th>
                                 <th>Currency</th>
@@ -202,7 +208,8 @@ export default function AdminTransactionsPage() {
                             {transactions.length > 0 ? (
                                 transactions.map((tx) => (
                                     <tr key={tx.id}>
-                                        <td><strong>{tx.user_id}</strong></td>
+                                        {/* Display tx.userName (Full Name or "Unknown User") */}
+                                        <td><strong>{tx.userName}</strong></td> 
                                         <td>{formatDate(tx.date)}</td>
                                         <td>{tx.amount}</td>
                                         <td>{tx.currency}</td>
@@ -233,9 +240,9 @@ export default function AdminTransactionsPage() {
                     <table className="transactions-table admin-table">
                         <thead>
                             <tr>
-                                <th>USER_ID</th>
-                                <th>Nom</th>
-                                <th>Post-Nom</th>
+                                <th>User ID</th> {/* Corrected Header */}
+                                <th>Nom</th>     {/* Corrected Header */}
+                                <th>Post-Nom</th> {/* Corrected Header */}
                                 <th>Email</th>
                                 <th>Address</th>
                                 <th>Date de Naissance</th>
@@ -245,7 +252,8 @@ export default function AdminTransactionsPage() {
                             {users.length > 0 ? (
                                 users.map((user) => (
                                     <tr key={user.id}>
-                                        <td><strong>{user.id}</strong></td>
+                                        {/* Corrected logic for Users table */}
+                                        <td><strong>{user.id}</strong></td> 
                                         <td>{user.name}</td>
                                         <td>{user.surname}</td>
                                         <td>{user.email}</td>
@@ -255,7 +263,7 @@ export default function AdminTransactionsPage() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="text-center">
+                                    <td colSpan="6" className="text-center">
                                         {banner.message.includes("Access Denied")
                                             ? "Access Denied. Admin privileges required."
                                             : "No users found or data is loading..."}

@@ -126,9 +126,9 @@ export default function AdminTransactionsPage() {
         };
 
         try {
-            // ***CRITICAL FIX: Changed axios.put to axios.patch***
+            // ⭐ UPDATED URL: Changed /transactions/${id} to /transactions/item/${id}
             const res = await axios.patch(
-                `${API_BASE_URL}/transactions/${id}`,
+                `${API_BASE_URL}/transactions/item/${id}`, // <--- ROUTE FIX HERE
                 updateData,
                 {
                     headers: {
@@ -168,9 +168,9 @@ export default function AdminTransactionsPage() {
         setConfirmDeleteTxId(null); 
 
         try {
-            // Use axios.delete for consistent error handling and clarity
+            // ⭐ UPDATED URL: Changed /transactions/${id} to /transactions/item/${id}
             const res = await axios.delete(
-                `${API_BASE_URL}/transactions/${id}`,
+                `${API_BASE_URL}/transactions/item/${id}`, // <--- ROUTE FIX HERE
                 {
                     headers: { 
                         Authorization: `Bearer ${token}` 

@@ -61,41 +61,46 @@ const AdminRequestsPage = () => {
         setShowModal(true);
     };
 
-    // 2. Confirmation from the modal triggers the API call
-    const confirmAction = async () => {
-        const { id, action } = actionDetails;
-        if (!id || !action) return;
+    
 
-        setShowModal(false); // Close modal immediately
+// 2. Confirmation from the modal triggers the API call
+const confirmAction = async () => {
+    const { id, action } = actionDetails;
+    if (!id || !action) return;
 
-        try {
-            const url = `${API_BASE_URL}/transactions/${id}/${action.toLowerCase()}`;
-            const response = await fetch(url, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
-                },
-            });
+    setShowModal(false); // Close modal immediately
 
-            if (response.ok) {
-                // Update Frontend State on Success
-                setRequests(prev =>
-                    prev.filter(req => req.id !== id) // Remove transaction from pending list
-                );
-                showNotification(`✅ Transaction successfully ${action.toLowerCase()}.`, 'success');
+    try {
+        // ⭐ CRITICAL FIX: Add 'item' segment to the URL path
+        const url = `${API_BASE_URL}/transactions/item/${id}/${action.toLowerCase()}`; // <--- ROUTE FIX HERE
+        
+        const response = await fetch(url, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+            },
+        });
 
-            } else {
-                const errorText = await response.text();
-                throw new Error(`Status: ${response.status}. Message: ${errorText || response.statusText}`);
-            }
-        } catch (error) {
-            console.error(`Error ${action} request:`, error);
-            showNotification(`❌ Failed to ${action.toLowerCase()} the request. Details: ${error.message}`, 'error');
-        } finally {
-            setActionDetails({ id: null, action: "" }); // Reset details
+        if (response.ok) {
+            // Update Frontend State on Success
+            setRequests(prev =>
+                prev.filter(req => req.id !== id) // Remove transaction from pending list
+            );
+            showNotification(`✅ Transaction successfully ${action.toLowerCase()}.`, 'success');
+
+        } else {
+            const errorText = await response.text();
+            throw new Error(`Status: ${response.status}. Message: ${errorText || response.statusText}`);
         }
-    };
+    } catch (error) {
+        console.error(`Error ${action} request:`, error);
+        showNotification(`❌ Failed to ${action.toLowerCase()} the request. Details: ${error.message}`, 'error');
+    } finally {
+        setActionDetails({ id: null, action: "" }); // Reset details
+    }
+};
+
 
     // --- Component JSX ---
 

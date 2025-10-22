@@ -1,182 +1,156 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./Transactions.css";
 
-const API_BASE_URL = "https://finsys.onrender.com/api";
+// Optional: Replace with your own card/table components
+const Card = ({ title, entries, sorties }) => (
+  <div className="card p-4 shadow rounded">
+    <h3 className="font-bold mb-2">{title}</h3>
+    <p>Entrées: {entries.toFixed(2)}</p>
+    <p>Sorties: {sorties.toFixed(2)}</p>
+  </div>
+);
 
-const formatDate = (dateString) => {
-  if (!dateString) return "-";
-  try {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-GB", {
-      year: "2-digit",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(date);
-  } catch {
-    return dateString.split("T")[0] || dateString;
-  }
-};
-
-export default function FinancierTransactionsPage() {
+const FinancierTransactionsPage = () => {
   const [transactions, setTransactions] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [banner, setBanner] = useState({ message: "", type: "" });
-  const [totalsByChannel, setTotalsByChannel] = useState({ entrees: {}, sorties: {} });
+  const [dollarsSum, setDollarsSum] = useState([0, 0]); // [Entrées, Sorties]
+  const [fcSum, setFcSum] = useState([0, 0]); // [Entrées, Sorties]
+  const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
-
-  const fetchAllUsers = async () => {
-    if (!token) return;
+  // Fetch transactions from API
+  const fetchTransactions = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/users`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUsers(res.data || []);
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
+      const { data } = await axios.get(
+        "https://finsys.onrender.com/api/transactions"
+      );
+      setTransactions(data);
+      calculateSums(data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching transactions:", err);
+      setLoading(false);
     }
   };
 
-  const fetchAllTransactions = async () => {
-    if (!token) {
-      setBanner({ message: "Authentication token missing.", type: "error" });
-      return;
-    }
+  // Calculate sums by currency and channel
+  const calculateSums = (transactions) => {
+    const approvedTx = transactions.filter((tx) => tx.status === "Approved");
 
-    try {
-      const res = await axios.get(`${API_BASE_URL}/transactions/all`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = res.data || [];
-      setTransactions(data);
+    const totalDollarsEntrees = approvedTx
+      .filter((tx) => tx.channel === "Entrées" && tx.currency === "$")
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
 
-      // ✅ Calculate totals by channel
-      const entrees = {};
-      const sorties = {};
+    const totalDollarsSorties = approvedTx
+      .filter((tx) => tx.channel === "Sorties" && tx.currency === "$")
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
 
-      data.forEach((tx) => {
-        const ch = tx.channel || "Unknown";
-        if (tx.amount > 0) {
-          entrees[ch] = (entrees[ch] || 0) + tx.amount;
-        } else if (tx.amount < 0) {
-          sorties[ch] = (sorties[ch] || 0) + Math.abs(tx.amount);
-        }
-      });
+    const totalFcEntrees = approvedTx
+      .filter((tx) => tx.channel === "Entrées" && tx.currency === "FC")
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
 
-      setTotalsByChannel({ entrees, sorties });
-    } catch (error) {
-      setBanner({
-        message: `Failed to fetch transactions: ${error.response?.data || error.message}`,
-        type: "error",
-      });
-    }
+    const totalFcSorties = approvedTx
+      .filter((tx) => tx.channel === "Sorties" && tx.currency === "FC")
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+
+    setDollarsSum([totalDollarsEntrees, totalDollarsSorties]);
+    setFcSum([totalFcEntrees, totalFcSorties]);
   };
 
   useEffect(() => {
-    fetchAllUsers();
-    fetchAllTransactions();
+    fetchTransactions();
   }, []);
 
-  const getUserName = (userId, userDetails) => {
-    if (userDetails && (userDetails.name || userDetails.surname)) {
-      return `${userDetails.name || ""} ${userDetails.surname || ""}`.trim();
+  // Delete transaction
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(
+        `https://finsys.onrender.com/api/transactions/item/${id}`
+      );
+      const updated = transactions.filter((tx) => tx.id !== id);
+      setTransactions(updated);
+      calculateSums(updated); // recalc sums
+    } catch (err) {
+      console.error("Delete failed:", err);
     }
-    const user = users.find((u) => u.id === userId);
-    return user ? `${user.name || ""} ${user.surname || ""}`.trim() : "Unknown";
   };
 
-  const downloadCSV = () => {
-    if (!transactions.length) return;
-
-    const csvHeader = ["User", "Date", "Amount", "Currency", "Channel", "Motif"].join(",");
-    const csvRows = transactions.map((tx) =>
-      [
-        `"${getUserName(tx.userId, tx.userDetails)}"`,
-        `"${formatDate(tx.date)}"`,
-        `"${tx.amount}"`,
-        `"${tx.currency}"`,
-        `"${tx.channel}"`,
-        `"${tx.motif}"`,
-      ].join(",")
-    );
-
-    const blob = new Blob([csvHeader + "\n" + csvRows.join("\n")], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "transactions.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
+  // Edit transaction
+  const handleEdit = async (id, updatedData) => {
+    try {
+      await axios.patch(
+        `https://finsys.onrender.com/api/transactions/item/${id}`,
+        updatedData
+      );
+      const updated = transactions.map((tx) =>
+        tx.id === id ? { ...tx, ...updatedData } : tx
+      );
+      setTransactions(updated);
+      calculateSums(updated);
+    } catch (err) {
+      console.error("Edit failed:", err);
+    }
   };
 
-  const renderCards = (totalsObj, title) => {
-    return Object.entries(totalsObj).map(([channel, amount]) => (
-      <div key={channel} className={`summary-card ${title.toLowerCase()}`}>
-        <h3>{title} - {channel}</h3>
-        <p>{amount.toLocaleString()} FC</p>
-      </div>
-    ));
-  };
+  if (loading) return <p>Loading transactions...</p>;
 
   return (
-    <div className="transactions-container">
-      {banner.message && <div className={`toast-notification ${banner.type}`}>{banner.message}</div>}
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Financier Transactions</h1>
 
-      <header className="transactions-header">
-        <h1>Transaction Overview</h1>
-        <p>View all financial records. Editing is disabled for your role.</p>
-      </header>
-
-      {/* ✅ Summary Cards By Channel */}
-      <div className="summary-row">
-        {renderCards(totalsByChannel.entrees, "Entrées")}
-        {renderCards(totalsByChannel.sorties, "Sorties")}
+      {/* Cards showing totals like Dashboard */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card
+          title="USD ($)"
+          entries={dollarsSum[0]}
+          sorties={dollarsSum[1]}
+        />
+        <Card title="FC" entries={fcSum[0]} sorties={fcSum[1]} />
       </div>
 
-      {/* ✅ Download Button */}
-      <div className="actions-row">
-        <button className="download-btn" onClick={downloadCSV}>
-          📥 Download Transactions (CSV)
-        </button>
-      </div>
-
-      {/* ✅ Transactions Table */}
-      <div className="transactions-card card">
-        <h2>All Transactions</h2>
-        <div className="table-responsive">
-          <table className="transactions-table">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Currency</th>
-                <th>Channel</th>
-                <th>Motif</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.length > 0 ? (
-                transactions.map((tx) => (
-                  <tr key={tx.id}>
-                    <td><strong>{getUserName(tx.userId, tx.userDetails)}</strong></td>
-                    <td>{formatDate(tx.date)}</td>
-                    <td>{tx.amount}</td>
-                    <td>{tx.currency}</td>
-                    <td>{tx.channel}</td>
-                    <td>{tx.motif}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="text-center">No transactions found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Transactions Table */}
+      <table className="table-auto w-full border-collapse border">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border px-4 py-2">ID</th>
+            <th className="border px-4 py-2">Amount</th>
+            <th className="border px-4 py-2">Currency</th>
+            <th className="border px-4 py-2">Channel</th>
+            <th className="border px-4 py-2">Status</th>
+            <th className="border px-4 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {transactions.map((tx) => (
+            <tr key={tx.id}>
+              <td className="border px-4 py-2">{tx.id}</td>
+              <td className="border px-4 py-2">{tx.amount}</td>
+              <td className="border px-4 py-2">{tx.currency}</td>
+              <td className="border px-4 py-2">{tx.channel}</td>
+              <td className="border px-4 py-2">{tx.status}</td>
+              <td className="border px-4 py-2 flex gap-2">
+                <button
+                  className="bg-blue-500 text-white px-2 py-1 rounded"
+                  onClick={() =>
+                    handleEdit(tx.id, {
+                      // Example edit: toggle status
+                      status: tx.status === "Approved" ? "Pending" : "Approved",
+                    })
+                  }
+                >
+                  Edit
+                </button>
+                <button
+                  className="bg-red-500 text-white px-2 py-1 rounded"
+                  onClick={() => handleDelete(tx.id)}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
-}
+};
+
+export default FinancierTransactionsPage;

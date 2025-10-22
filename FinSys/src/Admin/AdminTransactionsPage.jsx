@@ -113,46 +113,46 @@ export default function AdminTransactionsPage() {
         }));
     };
 
-    const handleUpdate = async (e) => {
-        e.preventDefault();
-        const { id, date, amount, currency, channel, motif } = editingTx;
+   const handleUpdate = async (e) => {
+  e.preventDefault();
+  const { id, date, amount, currency, channel, motif } = editingTx;
 
-        const updateData = {
-            date: date,
-            amount: parseFloat(amount),
-            currency: currency,
-            channel: channel,
-            motif: motif,
-        };
+  const updateData = {
+    date,
+    amount: parseFloat(amount),
+    currency,
+    channel,
+    motif,
+  };
 
-        try {
-            // ⭐ UPDATED URL: Changed /transactions/${id} to /transactions/item/${id}
-            const res = await axios.patch(
-                `${API_BASE_URL}/transactions/item/${id}`, // <--- ROUTE FIX HERE
-                updateData,
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+  try {
+    const res = await axios.patch(
+      `${API_BASE_URL}/transactions/${id}`, // ✅ FIXED
+      updateData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-            if (res.status === 204 || res.status === 200) {
-                setBanner({ message: "✅ Transaction updated successfully!", type: "success" });
-                setEditingTx(null);
-                fetchAllTransactions();
-            }
-        } catch (error) {
-            const errorMessage = error.response?.data?.message ||
-                error.response?.data ||
-                error.message ||
-                "Failed to update transaction.";
-            setBanner({ message: `❌ Error updating: ${errorMessage}`, type: "error" });
-        } finally {
-            setTimeout(() => setBanner({ message: "", type: "" }), 4000);
-        }
-    };
+    if (res.status === 200 || res.status === 204) {
+      setBanner({ message: "✅ Transaction updated successfully!", type: "success" });
+      setEditingTx(null);
+      fetchAllTransactions();
+    }
+  } catch (error) {
+    const errorMessage = error.response?.data?.message ||
+      error.response?.data ||
+      error.message ||
+      "Failed to update transaction.";
+    setBanner({ message: `❌ Error updating: ${errorMessage}`, type: "error" });
+  } finally {
+    setTimeout(() => setBanner({ message: "", type: "" }), 4000);
+  }
+};
+
     
     // --- DELETE HANDLERS ---
     const confirmDelete = (id) => {
@@ -163,37 +163,31 @@ export default function AdminTransactionsPage() {
         setConfirmDeleteTxId(null); // Hide modal
     };
     
-    const handleDelete = async (id) => {
-        // Hide the modal immediately after confirmation
-        setConfirmDeleteTxId(null); 
+  const handleDelete = async (id) => {
+  setConfirmDeleteTxId(null);
 
-        try {
-            // ⭐ UPDATED URL: Changed /transactions/${id} to /transactions/item/${id}
-            const res = await axios.delete(
-                `${API_BASE_URL}/transactions/item/${id}`, // <--- ROUTE FIX HERE
-                {
-                    headers: { 
-                        Authorization: `Bearer ${token}` 
-                    },
-                }
-            );
+  try {
+    const res = await axios.delete(
+      `${API_BASE_URL}/transactions/${id}`, // ✅ FIXED
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-            if (res.status === 204 || res.status === 200 || res.status === 202) {
-                setBanner({ message: "🗑️ Transaction deleted successfully!", type: "success" });
-                // Optimistically remove from state
-                setTransactions(prev => prev.filter(tx => tx.id !== id)); 
-            } else {
-                throw new Error("Failed to delete transaction with an unexpected response.");
-            }
-        } catch (error) {
-            const errorMessage = error.response?.data?.message ||
-                error.message || 
-                "Failed to delete transaction. Please check API/database logs.";
-            setBanner({ message: `❌ Error deleting: ${errorMessage}`, type: "error" });
-        } finally {
-            setTimeout(() => setBanner({ message: "", type: "" }), 4000);
-        }
-    };
+    if (res.status === 200 || res.status === 204 || res.status === 202) {
+      setBanner({ message: "🗑️ Transaction deleted successfully!", type: "success" });
+      setTransactions(prev => prev.filter(tx => tx.id !== id));
+    } else {
+      throw new Error("Failed to delete transaction with an unexpected response.");
+    }
+  } catch (error) {
+    const errorMessage = error.response?.data?.message ||
+      error.message ||
+      "Failed to delete transaction.";
+    setBanner({ message: `❌ Error deleting: ${errorMessage}`, type: "error" });
+  } finally {
+    setTimeout(() => setBanner({ message: "", type: "" }), 4000);
+  }
+};
+
 
     // --- RENDER ---
     return (

@@ -12,6 +12,7 @@ import AdminLayout from "./Admin/AdminLayout.jsx";
 import AdminTransactionsPage from "./Admin/AdminTransactionsPage.jsx";
 import AdminUsersPage from "./Admin/AdminUsersPage.jsx";
 import AdminRequestsPage from "./Admin/AdminRequestsPage.jsx";
+import AdminUpdatePage from "./Admin/AdminUpdatePage.jsx"; // ✅ NEW PAGE
 
 // 🚀 NEW FINANCIER IMPORT
 import FinancierTransactionsPage from "./Financier/FinancierTransactionPage.jsx";
@@ -20,37 +21,20 @@ import FinancierTransactionsPage from "./Financier/FinancierTransactionPage.jsx"
 import { useUserRole } from "./hooks/useAuth";
 
 // ------------------------------------------------------------------
-// 🔑 AUTH GUARD COMPONENT: Checks login status and role before rendering
+// 🔑 AUTH GUARD COMPONENT
 // ------------------------------------------------------------------
 const AuthGuard = ({ requiredRole }) => {
   const { role, isLoggedIn } = useUserRole();
   const normalizedRole = role.toLowerCase();
 
-  // 1. Not logged in: Redirect to login page
-  if (!isLoggedIn) {
-    return <Navigate to="/" replace />;
-  }
+  if (!isLoggedIn) return <Navigate to="/" replace />;
 
-  // Define roles that are restricted to the FinancierTransactions page
   const financierRoles = ["financier", "pasteur", "vice-president"];
 
-  // 2. Authorization Check
-  if (requiredRole === "admin" && normalizedRole !== "admin") {
-    // Logged in, but trying to access Admin page without Admin role: Redirect to Dashboard
-    return <Navigate to="/dashboard" replace />;
-  }
+  if (requiredRole === "admin" && normalizedRole !== "admin") return <Navigate to="/dashboard" replace />;
+  if (requiredRole === "user" && financierRoles.includes(normalizedRole)) return <Navigate to="/financier/transactions" replace />;
+  if (requiredRole === "financierGroup" && !financierRoles.includes(normalizedRole)) return <Navigate to="/dashboard" replace />;
 
-  // Check if a Financier-type user is trying to access a regular user route
-  if (requiredRole === "user" && financierRoles.includes(normalizedRole)) {
-    return <Navigate to="/financier/transactions" replace />;
-  }
-
-  // Check if the required role is one of the financier roles
-  if (requiredRole === "financierGroup" && !financierRoles.includes(normalizedRole)) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // 3. Authorized
   return <Outlet />;
 };
 
@@ -60,7 +44,7 @@ const AuthGuard = ({ requiredRole }) => {
 function ProtectedLayout() {
   return (
     <Sidebar>
-      <Outlet /> {/* nested routes render here */}
+      <Outlet />
     </Sidebar>
   );
 }
@@ -75,7 +59,7 @@ function App() {
       <Route path="/" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
 
-      {/* 2. REGULAR USER PROTECTED ROUTES (Requires any logged-in user) */}
+      {/* 2. REGULAR USER PROTECTED ROUTES */}
       <Route element={<AuthGuard requiredRole="user" />}>
         <Route element={<ProtectedLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -90,12 +74,14 @@ function App() {
         </Route>
       </Route>
 
-      {/* 4. ADMIN PROTECTED ROUTES (Requires Admin role) */}
+      {/* 4. ADMIN PROTECTED ROUTES */}
       <Route element={<AuthGuard requiredRole="admin" />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/requests" element={<AdminRequestsPage />} />
+          {/* ✅ NEW UPDATE PAGE ROUTE */}
+          <Route path="/admin/update/:id" element={<AdminUpdatePage />} />
         </Route>
       </Route>
 

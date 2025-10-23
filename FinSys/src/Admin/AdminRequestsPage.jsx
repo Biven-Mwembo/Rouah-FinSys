@@ -71,9 +71,7 @@ const confirmAction = async () => {
     setShowModal(false); // Close modal immediately
 
     try {
-        // ⭐ CRITICAL FIX: Add 'item' segment to the URL path
-        const url = `${API_BASE_URL}/transactions/item/${id}/${action.toLowerCase()}`; // <--- ROUTE FIX HERE
-        
+        const url = `${API_BASE_URL}/transactions/item/${id}/${action.toLowerCase()}`;
         const response = await fetch(url, {
             method: "PUT",
             headers: {
@@ -83,12 +81,9 @@ const confirmAction = async () => {
         });
 
         if (response.ok) {
-            // Update Frontend State on Success
-            setRequests(prev =>
-                prev.filter(req => req.id !== id) // Remove transaction from pending list
-            );
+            // Only update UI on confirmed success
+            setRequests(prev => prev.filter(req => req.id !== id));
             showNotification(`✅ Transaction successfully ${action.toLowerCase()}.`, 'success');
-
         } else {
             const errorText = await response.text();
             throw new Error(`Status: ${response.status}. Message: ${errorText || response.statusText}`);
@@ -96,11 +91,11 @@ const confirmAction = async () => {
     } catch (error) {
         console.error(`Error ${action} request:`, error);
         showNotification(`❌ Failed to ${action.toLowerCase()} the request. Details: ${error.message}`, 'error');
+        // Do NOT remove from UI on failure
     } finally {
-        setActionDetails({ id: null, action: "" }); // Reset details
+        setActionDetails({ id: null, action: "" });
     }
 };
-
 
     // --- Component JSX ---
 

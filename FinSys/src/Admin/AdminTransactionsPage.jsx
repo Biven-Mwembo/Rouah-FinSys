@@ -97,12 +97,11 @@ export default function AdminTransactionsPage() {
     }, []);
 
     // --- EDIT HANDLERS ---
-    const handleEdit = (transaction) => {
-        // Convert date string to YYYY-MM-DD format for input[type=date]
-        const dateValue = transaction.date ? new Date(transaction.date).toISOString().split('T')[0] : '';
-        setEditingTx({ ...transaction, date: dateValue });
-    };
-
+   const handleEdit = (transaction) => {
+    console.log("Editing transaction ID:", transaction.id);  // Should log "TR068"
+    const dateValue = transaction.date ? new Date(transaction.date).toISOString().split('T')[0] : '';
+    setEditingTx({ ...transaction, date: dateValue });
+};
     const handleCancelEdit = () => setEditingTx(null);
 
     const handleEditChange = (e) => {

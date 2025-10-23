@@ -127,6 +127,7 @@ export default function AdminTransactionsPage() {
 
         try {
             // ⭐ UPDATED URL: Changed /transactions/${id} to /transactions/item/${id}
+            console.log(`PATCH URL: ${API_BASE_URL}/transactions/item/${id}`);
             const res = await axios.patch(
                 `${API_BASE_URL}/transactions/item/${id}`, // <--- ROUTE FIX HERE
                 updateData,

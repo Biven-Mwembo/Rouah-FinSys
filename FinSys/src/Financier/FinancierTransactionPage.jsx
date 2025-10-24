@@ -196,10 +196,12 @@ const FinancierTransactionsPage = () => {
         </div>
 
         {/* Métriques de Performance */}
-        {performanceData && (
+     {performanceData && (
   <div className="performance-card">
     <h2 className="section-title">Métriques de Performance</h2>
+
     <div className="performance-layout">
+      {/* --- Top 3 Contributeurs --- */}
       {performanceData.topUsers && performanceData.topUsers.length > 0 && (
         <div className="performance-section">
           <h3>Top 3 Contributeurs</h3>
@@ -207,12 +209,16 @@ const FinancierTransactionsPage = () => {
             {performanceData.topUsers.map((user, index) => (
               <li key={user.id} className="top-user-item">
                 <span className="rank-badge">{index + 1}</span>
-                <div className="user-avatar">
-                  {user.name.charAt(0)}
-                </div>
-                <div className="user-info">
-                  <strong>{user.name}</strong>
-                  <span>{user.txCount} transactions</span>
+
+                <div className="user-content">
+                  <div className="user-header">
+                    <div className="user-avatar">{user.name.charAt(0)}</div>
+                    <strong className="user-name">{user.name}</strong>
+                  </div>
+
+                  <div className="user-stats">
+                    <span>{user.txCount} transactions</span>
+                  </div>
 
                   <div className="progress-container">
                     <div className="progress-bar">
@@ -235,18 +241,23 @@ const FinancierTransactionsPage = () => {
         </div>
       )}
 
+      {/* --- Classement Complet --- */}
       <div className="performance-section">
         <h3>Classement Complet</h3>
         <ul className="ranking-list full-ranking-list">
           {performanceData.sortedUsers.map((user, index) => (
             <li key={user.id}>
               <span className="rank-number">{index + 1}.</span>
-              <div className="user-avatar">
-                {user.name.charAt(0)}
-              </div>
-              <div className="user-info">
-                <strong>{user.name}</strong>
-                <span>{user.txCount} transactions</span>
+
+              <div className="user-content">
+                <div className="user-header">
+                  <div className="user-avatar">{user.name.charAt(0)}</div>
+                  <strong className="user-name">{user.name}</strong>
+                </div>
+
+                <div className="user-stats">
+                  <span>{user.txCount} transactions</span>
+                </div>
 
                 <div className="progress-container">
                   <div className="progress-bar">
@@ -271,12 +282,13 @@ const FinancierTransactionsPage = () => {
   </div>
 )}
 
-        {/* Bouton Télécharger PDF */}
-        <div className="button-container">
-          <button className="pdf-button" onClick={downloadPDF}>
-            Télécharger PDF
-          </button>
-        </div>
+{/* Bouton Télécharger PDF */}
+<div className="button-container">
+  <button className="pdf-button" onClick={downloadPDF}>
+    Télécharger PDF
+  </button>
+</div>
+
 
         {/* Table des Transactions */}
         <div className="table-wrapper">

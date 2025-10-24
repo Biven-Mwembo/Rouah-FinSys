@@ -221,18 +221,28 @@ const FinancierTransactionsPage = () => {
                   </div>
 
                   <div className="progress-container">
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill usd"
-                        style={{ width: `${user.usdPercent || 0}%` }}
-                      ></div>
-                    </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill fc"
-                        style={{ width: `${user.fcPercent || 0}%` }}
-                      ></div>
-                    </div>
+  <div className="progress-bar">
+    <div
+      className="progress-fill usd"
+      style={{ width: `${user.usdPercent || 0}%` }}
+    >
+      <span className="progress-label">
+        {user.usdPercent ? `${Math.round(user.usdPercent)}%` : '0%'}
+      </span>
+    </div>
+  </div>
+  <div className="progress-bar">
+    <div
+      className="progress-fill fc"
+      style={{ width: `${user.fcPercent || 0}%` }}
+    >
+      <span className="progress-label">
+        {user.fcPercent ? `${Math.round(user.fcPercent)}%` : '0%'}
+      </span>
+    </div>
+  </div>
+</div>
+
                   </div>
                 </div>
               </li>

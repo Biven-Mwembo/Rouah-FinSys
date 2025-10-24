@@ -19,6 +19,8 @@ const formatDate = (dateString) => {
 
 const AdminUsersPage = () => {
     const [users, setUsers] = useState([]);
+    const [transactions, setTransactions] = useState([]);
+    const [performanceData, setPerformanceData] = useState(null);
     const [banner, setBanner] = useState({ message: "", type: "" });
     const [editingUser, setEditingUser] = useState(null); // For edit modal
     const [confirmDeleteId, setConfirmDeleteId] = useState(null); // For delete modal
@@ -48,11 +50,106 @@ const AdminUsersPage = () => {
             );
     };
 
+    // Fetch transactions and calculate performance data
+    const fetchPerformanceData = () => {
+        if (!token) return;
+
+        fetch(`${API_BASE_URL}/transactions/all`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then(async (res) => {
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`[Status ${res.status}] ${errorText || res.statusText}`);
+                }
+                return res.json();
+            })
+            .then((data) => {
+                setTransactions(data);
+                calculatePerformance(data);
+            })
+            .catch((error) =>
+                setBanner({ message: `Failed to fetch transactions: ${error.message}`, type: "error" })
+            );
+    };
+
+    // Calculate performance metrics
+    const calculatePerformance = (txData) => {
+        if (!txData || txData.length === 0) {
+            setPerformanceData(null);
+            return;
+        }
+
+        const totalTx = txData.length;
+
+        // Count transactions per user
+        const userTxCounts = {};
+        txData.forEach(tx => {
+            const userId = tx.user_id || tx.user?.id;
+            if (userId) {
+                userTxCounts[userId] = (userTxCounts[userId] || 0) + 1;
+            }
+        });
+
+        // Find top user
+        let topUser = null;
+        let maxCount = 0;
+        Object.entries(userTxCounts).forEach(([userId, count]) => {
+            if (count > maxCount) {
+                maxCount = count;
+                const user = users.find(u => u.id === userId);
+                topUser = user ? { ...user, txCount: count } : { id: userId, name: "Unknown", surname: "", txCount: count };
+            }
+        });
+
+        // Aggregate amounts by channel and currency
+        const aggregates = { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } };
+        const userContributions = {}; // { userId: { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } } }
+
+        txData.forEach(tx => {
+            const userId = tx.user_id || tx.user?.id;
+            const channel = tx.channel?.toLowerCase();
+            const currency = tx.currency;
+            const amount = parseFloat(tx.amount) || 0;
+
+            if (channel === "entrées") {
+                if (currency === "$") aggregates.entrees.usd += amount;
+                else if (currency === "FC") aggregates.entrees.fc += amount;
+            } else if (channel === "sorties") {
+                if (currency === "$") aggregates.sorties.usd += amount;
+                else if (currency === "FC") aggregates.sorties.fc += amount;
+            }
+
+            // User contributions
+            if (userId) {
+                if (!userContributions[userId]) userContributions[userId] = { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } };
+                if (channel === "entrées") {
+                    if (currency === "$") userContributions[userId].entrees.usd += amount;
+                    else if (currency === "FC") userContributions[userId].entrees.fc += amount;
+                } else if (channel === "sorties") {
+                    if (currency === "$") userContributions[userId].sorties.usd += amount;
+                    else if (currency === "FC") userContributions[userId].sorties.fc += amount;
+                }
+            }
+        });
+
+        // Top user's contributions
+        const topUserContributions = topUser ? userContributions[topUser.id] || { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } } : null;
+
+        setPerformanceData({
+            totalTx,
+            topUser,
+            aggregates,
+            topUserContributions,
+        });
+    };
+
     useEffect(() => {
         fetchAllUsers();
+        fetchPerformanceData();
     }, []);
 
-    // Handle edit
+    // Handle edit (unchanged)
     const handleEdit = (user) => {
         const dateValue = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
         setEditingUser({ ...user, dob: dateValue });
@@ -110,7 +207,7 @@ const AdminUsersPage = () => {
         }
     };
 
-    // Handle delete
+    // Handle delete (unchanged)
     const confirmDelete = (id) => setConfirmDeleteId(id);
     const cancelDelete = () => setConfirmDeleteId(null);
 
@@ -147,6 +244,91 @@ const AdminUsersPage = () => {
             )}
 
             <h1>Admin User Management</h1>
+
+            {/* Performance Container */}
+            {performanceData && (
+                <div className="card" style={{ marginBottom: "2rem" }}>
+                    <div className="table-header">
+                        <h2>Performance Metrics</h2>
+                    </div>
+                    <div style={{ padding: "1rem" }}>
+                        {/* Top Contributor */}
+                        <div style={{ marginBottom: "1rem" }}>
+                            <h3>Top Contributor</h3>
+                            {performanceData.topUser ? (
+                                <p>
+                                    <strong>{performanceData.topUser.name} {performanceData.topUser.surname}</strong> added the most transactions: 
+                                    {performanceData.topUser.txCount} out of {performanceData.totalTx} total.
+                                </p>
+                            ) : (
+                                <p>No transactions found.</p>
+                            )}
+                        </div>
+
+                        {/* Entrées */}
+                        <div style={{ marginBottom: "1rem" }}>
+                            <h3>Entrées (Income)</h3>
+                            <p>Total: ${performanceData.aggregates.entrees.usd.toFixed(2)} | {performanceData.aggregates.entrees.fc.toFixed(2)} FC</p>
+                            {performanceData.topUser && performanceData.topUserContributions ? (
+                                <>
+                                    <p><strong>{performanceData.topUser.name}'s Contribution:</strong></p>
+                                    <div>
+                                        <label>$: {performanceData.topUserContributions.entrees.usd.toFixed(2)} / ${performanceData.aggregates.entrees.usd.toFixed(2)}</label>
+                                        <div className="progress-bar">
+                                            <div 
+                                                className="progress-fill" 
+                                                style={{ width: `${performanceData.aggregates.entrees.usd > 0 ? (performanceData.topUserContributions.entrees.usd / performanceData.aggregates.entrees.usd) * 100 : 0}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label>FC: {performanceData.topUserContributions.entrees.fc.toFixed(2)} / {performanceData.aggregates.entrees.fc.toFixed(2)} FC</label>
+                                        <div className="progress-bar">
+                                            <div 
+                                                className="progress-fill" 
+                                                style={{ width: `${performanceData.aggregates.entrees.fc > 0 ? (performanceData.topUserContributions.entrees.fc / performanceData.aggregates.entrees.fc) * 100 : 0}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <p>No contributions.</p>
+                            )}
+                        </div>
+
+                        {/* Sorties */}
+                        <div>
+                            <h3>Sorties (Expenses)</h3>
+                            <p>Total: ${performanceData.aggregates.sorties.usd.toFixed(2)} | {performanceData.aggregates.sorties.fc.toFixed(2)} FC</p>
+                            {performanceData.topUser && performanceData.topUserContributions ? (
+                                <>
+                                    <p><strong>{performanceData.topUser.name}'s Contribution:</strong></p>
+                                    <div>
+                                        <label>$: {performanceData.topUserContributions.sorties.usd.toFixed(2)} / ${performanceData.aggregates.sorties.usd.toFixed(2)}</label>
+                                        <div className="progress-bar">
+                                            <div 
+                                                className="progress-fill" 
+                                                style={{ width: `${performanceData.aggregates.sorties.usd > 0 ? (performanceData.topUserContributions.sorties.usd / performanceData.aggregates.sorties.usd) * 100 : 0}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label>FC: {performanceData.topUserContributions.sorties.fc.toFixed(2)} / {performanceData.aggregates.sorties.fc.toFixed(2)} FC</label>
+                                        <div className="progress-bar">
+                                            <div 
+                                                className="progress-fill" 
+                                                style={{ width: `${performanceData.aggregates.sorties.fc > 0 ? (performanceData.topUserContributions.sorties.fc / performanceData.aggregates.sorties.fc) * 100 : 0}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <p>No contributions.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Edit User Modal */}
             {editingUser && (
@@ -269,38 +451,4 @@ const AdminUsersPage = () => {
                                 <th>Name</th>
                                 <th>Surname</th>
                                 <th>Email</th>
-                                <th>Address</th>
-                                <th>Date of Birth</th>
-                                <th>Role</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.length > 0 ? (
-                                users.map((user) => (
-                                    <tr key={user.id}>
-                                        <td><strong>{user.id}</strong></td>
-                                        <td>{user.name}</td>
-                                        <td>{user.surname}</td>
-                                        <td>{user.email}</td>
-                                        <td>{user.address || "-"}</td>
-                                        <td>{user.dob ? formatDate(user.dob) : "-"}</td>
-                                        <td>{user.role}</td>
-                                        <td>
-                                            <button className="action-btn edit-btn" onClick={() => handleEdit(user)}>Edit</button>
-                                            <button className="action-btn delete-btn" onClick={() => confirmDelete(user.id)}>Delete</button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr><td colSpan="8" className="text-center">No users found.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-export default AdminUsersPage;
+                                <

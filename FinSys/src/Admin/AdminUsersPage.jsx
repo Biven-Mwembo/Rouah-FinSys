@@ -97,7 +97,11 @@ const AdminUsersPage = () => {
         Object.entries(userTxCounts).forEach(([userId, count]) => {
             if (count > maxCount) {
                 maxCount = count;
+                // Optional: Add logging here for debugging (remove after testing)
+                console.log("User ID from transaction:", userId);
+                console.log("Users array:", users);
                 const user = users.find(u => u.id === userId);
+                console.log("Found user:", user);
                 topUser = user ? { ...user, txCount: count } : { id: userId, name: "Unknown", surname: "", txCount: count };
             }
         });
@@ -148,6 +152,13 @@ const AdminUsersPage = () => {
         fetchAllUsers();
         fetchPerformanceData();
     }, []);
+
+    // New useEffect to recalculate when users or transactions change (this is the key fix)
+    useEffect(() => {
+        if (transactions.length > 0 && users.length > 0) {
+            calculatePerformance(transactions);
+        }
+    }, [users, transactions]);
 
     // Handle edit
     const handleEdit = (user) => {

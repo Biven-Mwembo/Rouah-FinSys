@@ -1,187 +1,417 @@
-/* ======= GLOBAL STYLES ======= */
-body {
-  background-color: #f9fafb;
-  color: #1f2937;
-  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
-  margin: 0;
-  padding: 0;
-}
+      
+        
+        html {
+          box-sizing: border-box;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
 
-.container {
-  background: #fff;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
+        *, *:before, *:after {
+          box-sizing: inherit;
+          margin: 0;
+          padding: 0;
+        }
 
-/* ======= TITLES ======= */
-h1 {
-  color: #111827;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 2rem;
-  font-size: 2rem;
-}
+        body {
+          background-color: #f4f7fa; /* Fond de page très clair */
+          color: #1a202c; /* Couleur de texte principale */
+          line-height: 1.6;
+        }
 
-h2, h3 {
-  color: #1f2937;
-  font-weight: 600;
-}
+        /* --- Conteneur Principal --- */
+        .financier-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 32px 24px;
+        }
 
-/* ======= CARDS (Entrées & Sorties) ======= */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
+        .page-title {
+          font-size: 2.25rem; /* 36px */
+          font-weight: 700;
+          margin-bottom: 32px;
+          color: #2d3748;
+        }
 
-.card {
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
-  padding: 1.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+        .section-title {
+          font-size: 1.5rem; /* 24px */
+          font-weight: 600;
+          margin-bottom: 24px;
+          color: #2d3748;
+          border-bottom: 1px solid #e2e8f0;
+          padding-bottom: 12px;
+        }
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-}
+        .loading-message {
+          text-align: center;
+          padding: 60px;
+          font-size: 1.25rem;
+          color: #718096;
+        }
 
-.card h3 {
-  font-size: 1.1rem;
-  color: #2563eb;
-  margin-bottom: 0.5rem;
-}
+        /* --- Grille des Cartes Résumé --- */
+        .summary-cards-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 24px;
+          margin-bottom: 32px;
+        }
 
-.card p {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #111827;
-}
+        .summary-card {
+          background-color: #ffffff;
+          border-radius: 12px;
+          padding: 24px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          border: 1px solid #e2e8f0;
+        }
 
-/* ======= PERFORMANCE METRICS ======= */
-.card.mb-6 {
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  padding: 1.5rem;
-}
+        .summary-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+        }
 
-.card.mb-6 h2 {
-  border-left: 5px solid #2563eb;
-  padding-left: 0.5rem;
-  margin-bottom: 1rem;
-}
+        .card-title {
+          font-weight: 500;
+          margin-bottom: 8px;
+          color: #718096; /* Gris moyen */
+          font-size: 0.9rem; /* 14px */
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
 
-.card.mb-6 ul {
-  list-style: none;
-  padding-left: 0;
-  margin: 0;
-}
+        .card-value {
+          font-size: 2.125rem; /* 34px */
+          font-weight: 700;
+          color: #2d3748;
+          line-height: 1.2;
+        }
 
-.card.mb-6 li {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 0.95rem;
-}
+        /* --- Carte des Performances --- */
+        .performance-card {
+          background-color: #ffffff;
+          border-radius: 12px;
+          padding: 24px 32px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+          border: 1px solid #e2e8f0;
+          margin-bottom: 32px;
+        }
 
-.card.mb-6 li:last-child {
-  border-bottom: none;
-}
+        .performance-layout {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 32px;
+        }
 
-.card.mb-6 li strong {
-  color: #111827;
-}
+        .performance-section h3 {
+          font-size: 1.125rem; /* 18px */
+          font-weight: 600;
+          color: #4a5568;
+          margin-bottom: 16px;
+        }
 
-/* ======= BUTTON ======= */
-button {
-  background-color: #2563eb;
-  color: #fff;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
+        .ranking-list {
+          list-style: none;
+          padding-left: 0;
+        }
 
-button:hover {
-  background-color: #1e40af;
-}
+        .ranking-list li {
+          display: flex;
+          align-items: center;
+          padding: 14px 0;
+          border-bottom: 1px solid #edf2f7;
+          font-size: 0.95rem;
+        }
 
-button:active {
-  transform: scale(0.98);
-}
+        .ranking-list li:last-child {
+          border-bottom: none;
+        }
 
-/* ======= TABLE ======= */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  border-radius: 12px;
-  overflow: hidden;
-  background-color: #ffffff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-}
+        .ranking-list .user-info {
+          display: flex;
+          flex-direction: column;
+          line-height: 1.4;
+        }
 
-th {
-  background-color: #f3f4f6;
-  color: #374151;
-  text-align: left;
-  padding: 12px;
-  font-weight: 600;
-  border-bottom: 2px solid #e5e7eb;
-}
+        .ranking-list .user-info strong {
+          color: #2d3748;
+          font-weight: 600;
+        }
 
-td {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  color: #1f2937;
-}
+        .ranking-list .user-info span {
+          color: #718096;
+          font-size: 0.85rem;
+        }
 
-tr:hover {
-  background-color: #f9fafb;
-  transition: background 0.2s ease-in-out;
-}
+        /* Top 3 Spécifique */
+        .top-user-item .rank-badge {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background-color: #e2e8f0;
+          color: #4a5568;
+          font-weight: 700;
+          font-size: 0.9rem;
+          margin-right: 16px;
+        }
 
-/* ======= MOBILE RESPONSIVENESS ======= */
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
+        .top-user-item:nth-child(1) .rank-badge {
+          background-color: #f6e05e; /* Or */
+          color: #744210;
+        }
+        .top-user-item:nth-child(2) .rank-badge {
+          background-color: #cbd5e0; /* Argent */
+          color: #4a5568;
+        }
+        .top-user-item:nth-child(3) .rank-badge {
+          background-color: #e9d8c7; /* Bronze */
+          color: #8c5a10;
+        }
 
-  .container {
-    padding: 1rem;
-  }
+        /* Classement Complet Spécifique */
+        .full-ranking-list {
+          max-height: 250px;
+          overflow-y: auto;
+          padding-right: 10px; /* Pour la barre de scroll */
+        }
 
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-    border-radius: 10px;
-  }
+        .full-ranking-list .rank-number {
+          color: #a0aec0;
+          font-weight: 600;
+          width: 32px; /* Aligner avec les badges */
+          margin-right: 16px;
+          text-align: left;
+        }
 
-  th, td {
-    padding: 10px 14px;
-    font-size: 0.9rem;
-  }
+        /* --- Bouton PDF --- */
+        .button-container {
+          margin-bottom: 24px;
+          text-align: right;
+        }
 
-  h1 {
-    font-size: 1.5rem;
-  }
+        .pdf-button {
+          background-color: #3182ce; /* Bleu moderne */
+          color: white;
+          padding: 12px 24px;
+          border: none;
+          border-radius: 8px;
+          font-size: 0.95rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+          box-shadow: 0 4px 6px rgba(49, 130, 206, 0.2);
+        }
 
-  button {
-    width: 100%;
-  }
-}
+        .pdf-button:hover {
+          background-color: #2b6cb0;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(49, 130, 206, 0.3);
+        }
 
-/* ======= SMOOTH SCROLLBAR ======= */
-table::-webkit-scrollbar {
-  height: 6px;
-}
-table::-webkit-scrollbar-thumb {
-  background-color: #9ca3af;
-  border-radius: 10px;
-}
+        .pdf-button:active {
+          transform: translateY(0);
+        }
+
+        /* --- Wrapper de Table (pour responsivité) --- */
+        .table-wrapper {
+          overflow-x: auto;
+          background: #ffffff;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+          border: 1px solid #e2e8f0;
+        }
+
+        /* --- Table des Transactions --- */
+        .transactions-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 900px; /* Force le scroll horizontal si besoin */
+        }
+
+        .transactions-table th,
+        .transactions-table td {
+          padding: 16px 20px;
+          text-align: left;
+          font-size: 0.9rem;
+          border-bottom: 1px solid #edf2f7;
+          color: #4a5568;
+          white-space: nowrap;
+        }
+
+        .transactions-table th {
+          background-color: #f7fafc; /* Fond d'en-tête très clair */
+          font-weight: 600;
+          color: #718096;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          font-size: 0.8rem;
+          border-top: none;
+        }
+
+        .transactions-table tr:last-child td {
+          border-bottom: none;
+        }
+
+        .transactions-table tbody tr {
+          transition: background-color 0.15s ease;
+        }
+
+        .transactions-table tbody tr:hover {
+          background-color: #fcfdfe;
+        }
+
+        /* --- Styles de Cellules Spécifiques --- */
+
+        /* Montant (Entrées/Sorties) */
+        .amount-cell {
+          font-weight: 600;
+        }
+        .amount-entrees {
+          color: #38a169; /* Vert */
+        }
+        .amount-sorties {
+          color: #e53e3e; /* Rouge */
+        }
+
+        /* Badge de Statut */
+        .status-badge {
+          padding: 5px 12px;
+          border-radius: 16px;
+          font-weight: 600;
+          font-size: 0.8rem;
+          text-transform: capitalize;
+          display: inline-block;
+          line-height: 1.4;
+        }
+
+        .status-approved {
+          background-color: #c6f6d5; /* Fond vert clair */
+          color: #2f855a; /* Texte vert foncé */
+        }
+        .status-pending {
+          background-color: #feebc8; /* Fond orange clair */
+          color: #c05621; /* Texte orange foncé */
+        }
+        .status-rejected {
+          background-color: #fed7d7; /* Fond rouge clair */
+          color: #c53030; /* Texte rouge foncé */
+        }
+        .status-unknown {
+          background-color: #e2e8f0; /* Fond gris clair */
+          color: #4a5568; /* Texte gris foncé */
+        }
+
+        /* --- Responsive Design --- */
+
+        /* Tablettes & Petits PC (max 1200px) */
+        @media (max-width: 1200px) {
+          .summary-cards-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        /* Tablettes (max 992px) */
+        @media (max-width: 992px) {
+          .performance-layout {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+        }
+
+        /* Mobiles (max 768px) */
+        @media (max-width: 768px) {
+          .financier-container {
+            padding: 24px 16px;
+          }
+
+          .page-title {
+            font-size: 1.875rem; /* 30px */
+            margin-bottom: 24px;
+          }
+
+          .summary-cards-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+          
+          .card-value {
+            font-size: 1.875rem; /* 30px */
+          }
+          
+          .button-container {
+            text-align: center;
+          }
+          
+          .pdf-button {
+            width: 100%;
+            padding: 14px;
+          }
+
+          /* --- Responsive Table (Stacking) --- */
+          .table-wrapper {
+             /* Permet au style ci-dessous de fonctionner sans wrapper */
+             overflow-x: hidden;
+             box-shadow: none;
+             border: none;
+             background: transparent;
+          }
+          .transactions-table {
+            min-width: auto;
+            border: none;
+            box-shadow: none;
+          }
+          .transactions-table thead {
+            display: none; /* Cache les en-têtes */
+          }
+          .transactions-table tr {
+            display: block;
+            margin-bottom: 16px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+          }
+          .transactions-table td {
+            display: flex; /* Change en flex pour alignement */
+            justify-content: space-between; /* Aligne libellé et valeur */
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid #edf2f7;
+            text-align: right; /* Aligne la valeur à droite */
+            white-space: normal;
+          }
+          .transactions-table td:last-child {
+            border-bottom: none;
+          }
+          .transactions-table td::before {
+            content: attr(data-label); /* Utilise data-label pour le libellé */
+            font-weight: 600;
+            color: #718096;
+            text-align: left;
+            margin-right: 16px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+          }
+        }
+
+        /* Ajustements fins pour mobile */
+        @media (max-width: 480px) {
+          .financier-container {
+            padding: 24px 12px;
+          }
+          
+          .performance-card {
+            padding: 24px;
+          }
+          
+          .page-title {
+            font-size: 1.75rem; /* 28px */
+          }
+          
+          .section-title {
+            font-size: 1.25rem; /* 20px */
+          }
+        }
+      

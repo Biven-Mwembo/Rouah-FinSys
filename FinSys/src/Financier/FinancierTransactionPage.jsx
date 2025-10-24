@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 // Fonction pour formater la date
 const formatDate = (dateString) => {
@@ -39,7 +39,7 @@ const FinancierTransactionsPage = () => {
   const fetchTransactions = async () => {
     try {
       const { data } = await axios.get(
-        "https://finsys.onrender.com/api/transactions",
+        "https://finsys.onrender.com/api/transactions/all", // Updated endpoint
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const sortedTx = data.sort((a, b) => new Date(b.date) - new Date(a.date)); // Dernières en premier
@@ -147,7 +147,7 @@ const FinancierTransactionsPage = () => {
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.text("Table des Transactions", 20, 10);
-    doc.autoTable({
+    autoTable(doc, {  // Fixed usage
       head: [["ID", "Utilisateur", "Date", "Montant", "Devise", "Canal", "Motif", "Statut"]],
       body: transactions.map(tx => [
         tx.id,

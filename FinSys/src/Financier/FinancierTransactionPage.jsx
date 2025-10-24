@@ -44,7 +44,7 @@ const FinancierTransactionsPage = () => {
       );
       const sortedTx = data.sort((a, b) => new Date(b.date) - new Date(a.date)); // Dernières en premier
       setTransactions(sortedTx);
-      calculatePerformance(sortedTx); // Combined calculation
+      calculatePerformance(sortedTx); // Calcul combiné
       setLoading(false);
     } catch (err) {
       console.error("Erreur lors de la récupération des transactions:", err);
@@ -67,7 +67,13 @@ const FinancierTransactionsPage = () => {
 
   // Calculer les métriques de performance et les sommes
   const calculatePerformance = (txData) => {
-    const approvedTx = txData.filter((tx) => tx.status === "Approved");
+    // Log statuses for debugging
+    console.log("Statuses in transactions:", txData.map(tx => tx.status));
+
+    // Filter for approved transactions (case-insensitive)
+    const approvedTx = txData.filter((tx) => tx.status?.toLowerCase() === "approved");
+    console.log("Approved transactions count:", approvedTx.length);
+
     const totalTx = approvedTx.length;
 
     // Calculate sums synchronously
@@ -86,6 +92,8 @@ const FinancierTransactionsPage = () => {
     const totalFcSorties = approvedTx
       .filter((tx) => tx.channel === "Sorties" && tx.currency === "FC")
       .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+
+    console.log("Sums calculated:", { totalDollarsEntrees, totalDollarsSorties, totalFcEntrees, totalFcSorties });
 
     setDollarsSum([totalDollarsEntrees, totalDollarsSorties]);
     setFcSum([totalFcEntrees, totalFcSorties]);

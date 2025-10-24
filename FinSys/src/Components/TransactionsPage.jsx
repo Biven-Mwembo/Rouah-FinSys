@@ -111,6 +111,20 @@ export default function TransactionsPage() {
     downloadCSV(transactions, 'all_transactions.csv');
   };
 
+  // Helper to render status icon
+  const renderStatusIcon = (status) => {
+    switch (status?.toLowerCase()) {
+      case "approved":
+        return <span style={{ color: "green", fontSize: "18px" }}>✅</span>; // Green checkmark
+      case "pending":
+        return <span className="blinking-dot" style={{ color: "orange", fontSize: "18px" }}>●</span>; // Blinking orange dot
+      case "declined":
+      case "rejected":
+        return <span style={{ color: "red", fontSize: "18px" }}>❌</span>; // Red X
+      default:
+        return <span>N/A</span>;
+    }
+  };
 
   return (
     <div className="transactions-container">
@@ -191,7 +205,7 @@ export default function TransactionsPage() {
               <th>Montant</th>
               <th>Currency</th>
               <th>Motif</th>
-             
+              <th>Status</th> {/* New Status column */}
             </tr>
           </thead>
           <tbody>
@@ -202,12 +216,12 @@ export default function TransactionsPage() {
                   <td>{tx.amount}</td>
                   <td>{tx.currency}</td>
                   <td>{tx.motif}</td>
-                  
+                  <td>{renderStatusIcon(tx.status)}</td> {/* New Status cell */}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center">No Sorties yet.</td>
+                <td colSpan="6" className="text-center">No Sorties yet.</td> {/* Updated colSpan */}
               </tr>
             )}
           </tbody>
@@ -219,6 +233,19 @@ export default function TransactionsPage() {
           ⬇ Download All as CSV
         </button>
       </div>
+
+      {/* Inline styles for blinking dot (move to Transactions.css for production) */}
+      <style>
+        {`
+          .blinking-dot {
+            animation: blink 1s infinite;
+          }
+          @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+          }
+        `}
+      </style>
     </div>
   );
 }

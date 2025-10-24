@@ -33,7 +33,7 @@ const FinancierTransactionsPage = () => {
   const [dollarsSum, setDollarsSum] = useState([0, 0]); // [Entrées, Sorties]
   const [fcSum, setFcSum] = useState([0, 0]); // [Entrées, Sorties]
   const [loading, setLoading] = useState(true);
-  const [usersLoaded, setUsersLoaded] = useState(false); // New state for users
+  const [usersLoaded, setUsersLoaded] = useState(false);
   const token = localStorage.getItem("token");
 
   // Récupérer les transactions
@@ -45,7 +45,6 @@ const FinancierTransactionsPage = () => {
       );
       const sortedTx = data.sort((a, b) => new Date(b.date) - new Date(a.date)); // Dernières en premier
       setTransactions(sortedTx);
-      calculatePerformance(sortedTx); // Calcul combiné
       setLoading(false);
     } catch (err) {
       console.error("Erreur lors de la récupération des transactions:", err);
@@ -61,15 +60,17 @@ const FinancierTransactionsPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUsers(data);
-      setUsersLoaded(true); // Set loaded after fetching
+      setUsersLoaded(true);
     } catch (err) {
       console.error("Erreur lors de la récupération des utilisateurs:", err);
-      setUsersLoaded(true); // Still set to true to avoid infinite loading
+      setUsersLoaded(true);
     }
   };
 
   // Calculer les métriques de performance et les sommes
   const calculatePerformance = (txData) => {
+    if (!txData || txData.length === 0 || users.length === 0) return; // Attendre les deux
+
     // Log statuses for debugging
     console.log("Statuses in transactions:", txData.map(tx => tx.status));
 
@@ -129,14 +130,14 @@ const FinancierTransactionsPage = () => {
         const user = users.find(u => u.id === userId);
         return {
           id: userId,
-          name: user ? `${user.name} ${user.surname}` : userId, // Show name or ID
+          name: user ? `${user.name} ${user.surname}` : userId,
           txCount: count,
           contributions: userContributions[userId] || { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } },
         };
       })
       .sort((a, b) => b.txCount - a.txCount);
 
-    const topUsers = sortedUsers.slice(0, 3); // Get top 3
+    const topUsers = sortedUsers.slice(0, 3);
 
     setPerformanceData({
       totalTx,
@@ -177,7 +178,14 @@ const FinancierTransactionsPage = () => {
     fetchUsers();
   }, []);
 
-  if (loading || !usersLoaded) return <p>Chargement des données...</p>; // Wait for both
+  // New useEffect to calculate performance when data is ready
+  useEffect(() => {
+    if (transactions.length > 0 && users.length > 0) {
+      calculatePerformance(transactions);
+    }
+  }, [transactions, users]);
+
+  if (loading || !usersLoaded) return <p>Chargement des données...</p>;
 
   return (
     <div className="container mx-auto p-6">
@@ -245,7 +253,7 @@ const FinancierTransactionsPage = () => {
           {transactions.map((tx) => (
             <tr key={tx.id}>
               <td className="border px-4 py-2">{tx.id}</td>
-              <td className="border px-4 py-2">{getUserName(tx.user_id)}</td> {/* Now shows name/surname */}
+              <td className="border px-4 py-2">{getUserName(tx.user_id)}</td>
               <td className="border px-4 py-2">{formatDate(tx.date)}</td>
               <td className="border px-4 py-2">{tx.amount}</td>
               <td className="border px-4 py-2">{tx.currency}</td>

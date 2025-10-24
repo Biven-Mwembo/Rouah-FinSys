@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./FinancierTransactionsPage.css";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import jsPDF from "https://esm.sh/jspdf@2.5.1";
+import autoTable from "https://esm.sh/jspdf-autotable@3.8.2";
 
 // Fonction pour formater la date
 const formatDate = (dateString) => {
   if (!dateString) return "-";
   try {
     const date = new Date(dateString);
+    // Format français (DD/MM/YY)
     return new Intl.DateTimeFormat('fr-FR', {
       year: '2-digit',
       month: '2-digit',
@@ -85,8 +85,6 @@ const FinancierTransactionsPage = () => {
     // For sums, use approved if available, else all transactions
     const sumTx = approvedTx.length > 0 ? approvedTx : txData;
 
-    const totalTx = approvedTx.length;
-
     // Calculate sums synchronously
     const totalDollarsEntrees = sumTx
       .filter((tx) => tx.channel === "Entrées" && tx.currency === "$")
@@ -107,36 +105,19 @@ const FinancierTransactionsPage = () => {
     setDollarsSum([totalDollarsEntrees, totalDollarsSorties]);
     setFcSum([totalFcEntrees, totalFcSorties]);
 
-    const aggregates = { entrees: { usd: totalDollarsEntrees, fc: totalFcEntrees }, sorties: { usd: totalDollarsSorties, fc: totalFcSorties } };
-
     const userTxCounts = {};
+    // Calculate transaction count per user
     approvedTx.forEach(tx => {
       const userId = tx.user_id;
       if (userId) userTxCounts[userId] = (userTxCounts[userId] || 0) + 1;
-    });
-
-    const userContributions = {};
-    approvedTx.forEach(tx => {
-      const userId = tx.user_id;
-      if (userId) {
-        if (!userContributions[userId]) userContributions[userId] = { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } };
-        if (tx.channel === "Entrées") {
-          if (tx.currency === "$") userContributions[userId].entrees.usd += Number(tx.amount || 0);
-          else if (tx.currency === "FC") userContributions[userId].entrees.fc += Number(tx.amount || 0);
-        } else if (tx.channel === "Sorties") {
-          if (tx.currency === "$") userContributions[userId].sorties.usd += Number(tx.amount || 0);
-          else if (tx.currency === "FC") userContributions[userId].sorties.fc += Number(tx.amount || 0);
-        }
-      }
     });
 
     const sortedUsers = Object.entries(userTxCounts)
       .map(([userId, count]) => {
         return {
           id: userId,
-          name: userId, // Show ID since no users fetched
+          name: userId, // Show ID since user name is not fetched
           txCount: count,
-          contributions: userContributions[userId] || { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } },
         };
       })
       .sort((a, b) => b.txCount - a.txCount);
@@ -144,10 +125,8 @@ const FinancierTransactionsPage = () => {
     const topUsers = sortedUsers.slice(0, 3);
 
     setPerformanceData({
-      totalTx,
       sortedUsers,
       topUsers,
-      aggregates,
     });
   };
 
@@ -171,7 +150,7 @@ const FinancierTransactionsPage = () => {
     doc.save("transactions.pdf");
   };
 
-  // Obtenir le nom de l'utilisateur (from tx.user if available)
+  // Obtenir le nom de l'utilisateur
   const getUserName = (tx) => {
     return tx.user ? `${tx.user.name} ${tx.user.surname}` : tx.user_id || "N/A";
   };
@@ -184,6 +163,7 @@ const FinancierTransactionsPage = () => {
 
   return (
     <>
+       
       <div className="financier-container">
         <h1 className="page-title">Transactions Financier</h1>
 
@@ -196,109 +176,53 @@ const FinancierTransactionsPage = () => {
         </div>
 
         {/* Métriques de Performance */}
-     {performanceData && (
-  <div className="performance-card">
-    <h2 className="section-title">Métriques de Performance</h2>
-
-    <div className="performance-layout">
-      {/* --- Top 3 Contributeurs --- */}
-      {performanceData.topUsers && performanceData.topUsers.length > 0 && (
-        <div className="performance-section">
-          <h3>Top 3 Contributeurs</h3>
-          <ul className="ranking-list">
-            {performanceData.topUsers.map((user, index) => (
-              <li key={user.id} className="top-user-item">
-                <span className="rank-badge">{index + 1}</span>
-
-                <div className="user-content">
-                  <div className="user-header">
-                    <div className="user-avatar">{user.name.charAt(0)}</div>
-                    <strong className="user-name">{user.name}</strong>
-                  </div>
-
-                  <div className="user-stats">
-                    <span>{user.txCount} transactions</span>
-                  </div>
-
-                  <div className="progress-container">
-  <div className="progress-bar">
-    <div
-      className="progress-fill usd"
-      style={{ width: `${user.usdPercent || 0}%` }}
-    >
-      <span className="progress-label">
-        {user.usdPercent ? `${Math.round(user.usdPercent)}%` : '0%'}
-      </span>
-    </div>
-  </div>
-  <div className="progress-bar">
-    <div
-      className="progress-fill fc"
-      style={{ width: `${user.fcPercent || 0}%` }}
-    >
-      <span className="progress-label">
-        {user.fcPercent ? `${Math.round(user.fcPercent)}%` : '0%'}
-      </span>
-    </div>
-  </div>
-</div>
-
-                  </div>
+        {performanceData && (
+          <div className="performance-card">
+            <h2 className="section-title">Métriques de Performance</h2>
+            <div className="performance-layout">
+              {/* --- Top 3 Contributeurs --- */}
+              {performanceData.topUsers && performanceData.topUsers.length > 0 && (
+                <div className="performance-section">
+                  <h3>Top 3 Contributeurs</h3>
+                  <ul className="ranking-list">
+                    {performanceData.topUsers.map((user, index) => (
+                      <li key={user.id} className="top-user-item">
+                        <span className="rank-badge">{index + 1}</span>
+                        <div className="user-info">
+                          <strong>{user.name}</strong>
+                          <span>{user.txCount} transactions</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+              )}
 
-      {/* --- Classement Complet --- */}
-      <div className="performance-section">
-        <h3>Classement Complet</h3>
-        <ul className="ranking-list full-ranking-list">
-          {performanceData.sortedUsers.map((user, index) => (
-            <li key={user.id}>
-              <span className="rank-number">{index + 1}.</span>
-
-              <div className="user-content">
-                <div className="user-header">
-                  <div className="user-avatar">{user.name.charAt(0)}</div>
-                  <strong className="user-name">{user.name}</strong>
-                </div>
-
-                <div className="user-stats">
-                  <span>{user.txCount} transactions</span>
-                </div>
-
-                <div className="progress-container">
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill usd"
-                      style={{ width: `${user.usdPercent || 0}%` }}
-                    ></div>
-                  </div>
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill fc"
-                      style={{ width: `${user.fcPercent || 0}%` }}
-                    ></div>
-                  </div>
-                </div>
+              {/* --- Classement Complet --- */}
+              <div className="performance-section">
+                <h3>Classement Complet</h3>
+                <ul className="ranking-list full-ranking-list">
+                  {performanceData.sortedUsers.map((user, index) => (
+                    <li key={user.id}>
+                      <span className="rank-number">{index + 1}.</span>
+                      <div className="user-info">
+                        <strong>{user.name}</strong>
+                        <span>{user.txCount} transactions</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  </div>
-)}
+            </div>
+          </div>
+        )}
 
-{/* Bouton Télécharger PDF */}
-<div className="button-container">
-  <button className="pdf-button" onClick={downloadPDF}>
-    Télécharger PDF
-  </button>
-</div>
-
+        {/* Bouton Télécharger PDF */}
+        <div className="button-container">
+          <button className="pdf-button" onClick={downloadPDF}>
+            Télécharger PDF
+          </button>
+        </div>
 
         {/* Table des Transactions */}
         <div className="table-wrapper">

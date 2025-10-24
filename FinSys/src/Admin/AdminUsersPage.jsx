@@ -149,7 +149,7 @@ const AdminUsersPage = () => {
         fetchPerformanceData();
     }, []);
 
-    // Handle edit (unchanged)
+    // Handle edit
     const handleEdit = (user) => {
         const dateValue = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
         setEditingUser({ ...user, dob: dateValue });
@@ -207,7 +207,7 @@ const AdminUsersPage = () => {
         }
     };
 
-    // Handle delete (unchanged)
+    // Handle delete
     const confirmDelete = (id) => setConfirmDeleteId(id);
     const cancelDelete = () => setConfirmDeleteId(null);
 
@@ -451,4 +451,38 @@ const AdminUsersPage = () => {
                                 <th>Name</th>
                                 <th>Surname</th>
                                 <th>Email</th>
-                                <
+                                <th>Address</th>
+                                <th>Date of Birth</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {users.length > 0 ? (
+                                users.map((user) => (
+                                    <tr key={user.id}>
+                                        <td><strong>{user.id}</strong></td>
+                                        <td>{user.name}</td>
+                                        <td>{user.surname}</td>
+                                        <td>{user.email}</td>
+                                        <td>{user.address || "-"}</td>
+                                        <td>{user.dob ? formatDate(user.dob) : "-"}</td>
+                                        <td>{user.role}</td>
+                                        <td>
+                                            <button className="action-btn edit-btn" onClick={() => handleEdit(user)}>Edit</button>
+                                            <button className="action-btn delete-btn" onClick={() => confirmDelete(user.id)}>Delete</button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr><td colSpan="8" className="text-center">No users found.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default AdminUsersPage;

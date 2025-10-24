@@ -44,8 +44,7 @@ const FinancierTransactionsPage = () => {
       );
       const sortedTx = data.sort((a, b) => new Date(b.date) - new Date(a.date)); // Dernières en premier
       setTransactions(sortedTx);
-      calculateSums(sortedTx);
-      calculatePerformance(sortedTx);
+      calculatePerformance(sortedTx); // Combined calculation
       setLoading(false);
     } catch (err) {
       console.error("Erreur lors de la récupération des transactions:", err);
@@ -66,10 +65,12 @@ const FinancierTransactionsPage = () => {
     }
   };
 
-  // Calculer les sommes par devise et canal
-  const calculateSums = (transactions) => {
-    const approvedTx = transactions.filter((tx) => tx.status === "Approved");
+  // Calculer les métriques de performance et les sommes
+  const calculatePerformance = (txData) => {
+    const approvedTx = txData.filter((tx) => tx.status === "Approved");
+    const totalTx = approvedTx.length;
 
+    // Calculate sums synchronously
     const totalDollarsEntrees = approvedTx
       .filter((tx) => tx.channel === "Entrées" && tx.currency === "$")
       .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
@@ -88,12 +89,8 @@ const FinancierTransactionsPage = () => {
 
     setDollarsSum([totalDollarsEntrees, totalDollarsSorties]);
     setFcSum([totalFcEntrees, totalFcSorties]);
-  };
 
-  // Calculer les métriques de performance
-  const calculatePerformance = (txData) => {
-    const approvedTx = txData.filter((tx) => tx.status === "Approved");
-    const totalTx = approvedTx.length;
+    const aggregates = { entrees: { usd: totalDollarsEntrees, fc: totalFcEntrees }, sorties: { usd: totalDollarsSorties, fc: totalFcSorties } };
 
     const userTxCounts = {};
     approvedTx.forEach(tx => {
@@ -115,8 +112,6 @@ const FinancierTransactionsPage = () => {
         }
       }
     });
-
-    const aggregates = { entrees: { usd: dollarsSum[0], fc: fcSum[0] }, sorties: { usd: dollarsSum[1], fc: fcSum[1] } };
 
     const sortedUsers = Object.entries(userTxCounts)
       .map(([userId, count]) => {

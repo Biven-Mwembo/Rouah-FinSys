@@ -532,3 +532,17 @@
 .confirm-modal .form-actions {
     justify-content: space-around;
 }
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: #4caf50; /* Green for positive metrics */
+    transition: width 0.3s ease;
+}

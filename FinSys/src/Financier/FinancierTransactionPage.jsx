@@ -71,29 +71,33 @@ const FinancierTransactionsPage = () => {
   const calculatePerformance = (txData) => {
     if (!txData || txData.length === 0 || users.length === 0) return; // Attendre les deux
 
-    // Log statuses for debugging
-    console.log("Statuses in transactions:", txData.map(tx => tx.status));
+    console.log("Users array:", users); // Debug users
+    console.log("Statuses in transactions:", txData.map(tx => tx.status)); // Debug statuses
 
     // Filter for approved transactions (case-insensitive)
     const approvedTx = txData.filter((tx) => tx.status?.toLowerCase() === "approved");
     console.log("Approved transactions count:", approvedTx.length);
 
+    // For sums, use approved if available, else all transactions
+    const sumTx = approvedTx.length > 0 ? approvedTx : txData;
+    console.log("Using transactions for sums:", sumTx.length);
+
     const totalTx = approvedTx.length;
 
     // Calculate sums synchronously
-    const totalDollarsEntrees = approvedTx
+    const totalDollarsEntrees = sumTx
       .filter((tx) => tx.channel === "Entrées" && tx.currency === "$")
       .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
 
-    const totalDollarsSorties = approvedTx
+    const totalDollarsSorties = sumTx
       .filter((tx) => tx.channel === "Sorties" && tx.currency === "$")
       .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
 
-    const totalFcEntrees = approvedTx
+    const totalFcEntrees = sumTx
       .filter((tx) => tx.channel === "Entrées" && tx.currency === "FC")
       .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
 
-    const totalFcSorties = approvedTx
+    const totalFcSorties = sumTx
       .filter((tx) => tx.channel === "Sorties" && tx.currency === "FC")
       .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
 
@@ -128,6 +132,7 @@ const FinancierTransactionsPage = () => {
     const sortedUsers = Object.entries(userTxCounts)
       .map(([userId, count]) => {
         const user = users.find(u => u.id === userId);
+        console.log("For userId:", userId, "Found user:", user); // Debug user lookup
         return {
           id: userId,
           name: user ? `${user.name} ${user.surname}` : userId,
@@ -170,6 +175,7 @@ const FinancierTransactionsPage = () => {
   // Obtenir le nom de l'utilisateur
   const getUserName = (userId) => {
     const user = users.find(u => u.id === userId);
+    console.log("Looking for userId:", userId, "Found:", user); // Debug
     return user ? `${user.name} ${user.surname}` : userId || "N/A";
   };
 

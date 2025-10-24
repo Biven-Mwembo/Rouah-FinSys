@@ -196,42 +196,79 @@ const FinancierTransactionsPage = () => {
 
         {/* Métriques de Performance */}
         {performanceData && (
-          <div className="performance-card">
-            <h2 className="section-title">Métriques de Performance</h2>
-            <div className="performance-layout">
-              {performanceData.topUsers && performanceData.topUsers.length > 0 && (
-                <div className="performance-section">
-                  <h3>Top 3 Contributeurs</h3>
-                  <ul className="ranking-list">
-                    {performanceData.topUsers.map((user, index) => (
-                      <li key={user.id} className="top-user-item">
-                        <span className="rank-badge">{index + 1}</span>
-                        <div className="user-info">
-                          <strong>{user.name}</strong>
-                          <span>{user.txCount} transactions</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+  <div className="performance-card">
+    <h2 className="section-title">Métriques de Performance</h2>
+    <div className="performance-layout">
+      {performanceData.topUsers && performanceData.topUsers.length > 0 && (
+        <div className="performance-section">
+          <h3>Top 3 Contributeurs</h3>
+          <ul className="ranking-list">
+            {performanceData.topUsers.map((user, index) => (
+              <li key={user.id} className="top-user-item">
+                <span className="rank-badge">{index + 1}</span>
+                <div className="user-avatar">
+                  {user.name.charAt(0)}
                 </div>
-              )}
-              <div className="performance-section">
-                <h3>Classement Complet</h3>
-                <ul className="ranking-list full-ranking-list">
-                  {performanceData.sortedUsers.map((user, index) => (
-                    <li key={user.id}>
-                      <span className="rank-number">{index + 1}.</span>
-                      <div className="user-info">
-                        <strong>{user.name}</strong>
-                        <span>{user.txCount} transactions</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                <div className="user-info">
+                  <strong>{user.name}</strong>
+                  <span>{user.txCount} transactions</span>
+
+                  <div className="progress-container">
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill usd"
+                        style={{ width: `${user.usdPercent || 0}%` }}
+                      ></div>
+                    </div>
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill fc"
+                        style={{ width: `${user.fcPercent || 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="performance-section">
+        <h3>Classement Complet</h3>
+        <ul className="ranking-list full-ranking-list">
+          {performanceData.sortedUsers.map((user, index) => (
+            <li key={user.id}>
+              <span className="rank-number">{index + 1}.</span>
+              <div className="user-avatar">
+                {user.name.charAt(0)}
               </div>
-            </div>
-          </div>
-        )}
+              <div className="user-info">
+                <strong>{user.name}</strong>
+                <span>{user.txCount} transactions</span>
+
+                <div className="progress-container">
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill usd"
+                      style={{ width: `${user.usdPercent || 0}%` }}
+                    ></div>
+                  </div>
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill fc"
+                      style={{ width: `${user.fcPercent || 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* Bouton Télécharger PDF */}
         <div className="button-container">

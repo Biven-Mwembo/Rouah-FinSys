@@ -12,7 +12,7 @@ const formatDate = (dateString) => {
   try {
     const date = new Date(dateString);
     // Use Intl.DateTimeFormat for a reliable format: DD/MM/YY
-    return new Intl.DateTimeFormat('en-GB', {
+    return new Intl.DateTimeFormat('fr-FR', {  // Changed to fr-FR for French date format if needed
       year: '2-digit',
       month: '2-digit',
       day: '2-digit',
@@ -27,7 +27,7 @@ const formatDate = (dateString) => {
 const downloadCSV = (data, filename) => {
     // Define the column headers for the CSV
     const csvRows = [
-        ["Date", "Amount", "Currency", "Channel", "Motif", "File"],
+        ["Date", "Montant", "Devise", "Canal", "Motif", "Fichier"],  // Translated headers
         // Map the array of transaction objects to an array of CSV row arrays
         ...data.map((t) => [
             formatDate(t.date),
@@ -68,14 +68,14 @@ export default function TransactionsPage() {
     try {
       userId = JSON.parse(userString)?.id;
     } catch (e) {
-      console.error("Could not parse user data from localStorage:", e);
+      console.error("Impossible d'analyser les données utilisateur depuis localStorage:", e);
     }
   }
 
   // Fetch transactions for the logged-in user
   useEffect(() => {
     if (!userId) {
-      setBanner({ message: "User not logged in.", type: "error" });
+      setBanner({ message: "Utilisateur non connecté.", type: "error" });
       return;
     }
 
@@ -83,12 +83,12 @@ export default function TransactionsPage() {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch transactions");
+        if (!res.ok) throw new Error("Échec de récupération des transactions");
         return res.json();
       })
       .then(setTransactions)
       .catch(() =>
-        setBanner({ message: "Failed to fetch transactions.", type: "error" })
+        setBanner({ message: "Échec de récupération des transactions.", type: "error" })
       );
   }, [userId]);
 
@@ -108,7 +108,7 @@ export default function TransactionsPage() {
   
   // New handler for the "Download All" button
   const handleDownloadAll = () => {
-    downloadCSV(transactions, 'all_transactions.csv');
+    downloadCSV(transactions, 'toutes_les_transactions.csv');
   };
 
   // Helper to render status icon
@@ -117,7 +117,12 @@ export default function TransactionsPage() {
       case "approved":
         return <span style={{ color: "green", fontSize: "18px" }}>✅</span>; // Green checkmark
       case "pending":
-        return <span className="blinking-dot" style={{ color: "orange", fontSize: "18px" }}>●</span>; // Blinking orange dot
+        return (
+          <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            <span className="floating-yolk" style={{ color: "orange", fontSize: "18px" }}>●</span>
+            En Attente..
+          </span>
+        ); // Floating orange dot with text
       case "declined":
       case "rejected":
         return <span style={{ color: "red", fontSize: "18px" }}>❌</span>; // Red X
@@ -136,7 +141,7 @@ export default function TransactionsPage() {
       )}
 
       {/* Title Updated */}
-      <h1>Transaction Data Tables</h1>
+      <h1>Tableaux de Données de Transactions</h1>
       
    
       
@@ -152,15 +157,15 @@ export default function TransactionsPage() {
             onClick={() => handleDownloadTable(entrees, 'Entrees')}
             disabled={entrees.length === 0}
           >
-            ⬇ Telecharger Entrées CSV
+            ⬇ Télécharger Entrées CSV
           </button>
         </div>
         <table className="transactions-table">
           <thead>
             <tr>
               <th>Date</th>
-              <th>Amount</th>
-              <th>Currency</th>
+              <th>Montant</th>
+              <th>Devise</th>
               <th>Motif</th>
               
             </tr>
@@ -178,7 +183,7 @@ export default function TransactionsPage() {
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="text-center">No Entrées yet.</td>
+                <td colSpan="5" className="text-center">Aucune Entrée pour le moment.</td>
               </tr>
             )}
           </tbody>
@@ -195,7 +200,7 @@ export default function TransactionsPage() {
             onClick={() => handleDownloadTable(sorties, 'Sorties')}
             disabled={sorties.length === 0}
           >
-            ⬇ Telecharger Sorties CSV
+            ⬇ Télécharger Sorties CSV
           </button>
         </div>
         <table className="transactions-table">
@@ -203,9 +208,9 @@ export default function TransactionsPage() {
             <tr>
               <th>Date</th>
               <th>Montant</th>
-              <th>Currency</th>
+              <th>Devise</th>
               <th>Motif</th>
-              <th>Status</th> {/* New Status column */}
+              <th>Statut</th> {/* Translated to French */}
             </tr>
           </thead>
           <tbody>
@@ -216,12 +221,12 @@ export default function TransactionsPage() {
                   <td>{tx.amount}</td>
                   <td>{tx.currency}</td>
                   <td>{tx.motif}</td>
-                  <td>{renderStatusIcon(tx.status)}</td> {/* New Status cell */}
+                  <td>{renderStatusIcon(tx.status)}</td> {/* Status with floating animation and text */}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center">No Sorties yet.</td> {/* Updated colSpan */}
+                <td colSpan="6" className="text-center">Aucune Sortie pour le moment.</td> {/* Updated colSpan and translated */}
               </tr>
             )}
           </tbody>
@@ -230,19 +235,21 @@ export default function TransactionsPage() {
 
       <div className="download-section">
         <button className="download-btn" onClick={handleDownloadAll} disabled={transactions.length === 0}>
-          ⬇ Download All as CSV
+          ⬇ Télécharger Tout en CSV
         </button>
       </div>
 
-      {/* Inline styles for blinking dot (move to Transactions.css for production) */}
+      {/* Inline styles for floating yolk animation (move to Transactions.css for production) */}
       <style>
         {`
-          .blinking-dot {
-            animation: blink 1s infinite;
+          .floating-yolk {
+            animation: float 2s ease-in-out infinite;
           }
-          @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0.3; }
+          @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-3px) rotate(5deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(3px) rotate(-5deg); }
           }
         `}
       </style>

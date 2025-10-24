@@ -1,212 +1,79 @@
-      
-        
-        html {
-          box-sizing: border-box;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        }
+/* --- Global Layout --- */
+.financier-container {
+  padding: 2rem;
+  background-color: #f9fafc;
+  color: #222;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
 
-        *, *:before, *:after {
-          box-sizing: inherit;
-          margin: 0;
-          padding: 0;
-        }
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  color: #111;
+  margin-bottom: 2rem;
+}
 
-        body {
-          background-color: #f4f7fa; /* Fond de page très clair */
-          color: #1a202c; /* Couleur de texte principale */
-          line-height: 1.6;
-        }
-
-        /* --- Conteneur Principal --- */
-        .financier-container {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 32px 24px;
-        }
-
-        .page-title {
-          font-size: 2.25rem; /* 36px */
-          font-weight: 700;
-          margin-bottom: 32px;
-          color: #2d3748;
-        }
-
-        .section-title {
-          font-size: 1.5rem; /* 24px */
-          font-weight: 600;
-          margin-bottom: 24px;
-          color: #2d3748;
-          border-bottom: 1px solid #e2e8f0;
-          padding-bottom: 12px;
-        }
-
-        .loading-message {
-          text-align: center;
-          padding: 60px;
-          font-size: 1.25rem;
-          color: #718096;
-        }
-
-        /* --- Grille des Cartes Résumé --- */
-      /* ======= SUMMARY CARDS ======= */
+/* --- Summary Cards --- */
 .summary-cards-grid {
   display: flex;
   justify-content: space-between;
-  align-items: stretch;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
   flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
-/* Group the first 2 Entrées cards into one visual block */
-.summary-cards-grid .card:nth-child(1),
-.summary-cards-grid .card:nth-child(3) {
-  order: 1;
-}
-
-.summary-cards-grid .card:nth-child(2),
-.summary-cards-grid .card:nth-child(4) {
-  order: 2;
-}
-
-/* Combine each pair (Entrées + Sorties) vertically inside larger containers */
-.summary-cards-grid {
-  position: relative;
-}
-
-.summary-cards-grid::before,
-.summary-cards-grid::after {
-  content: "";
-  display: block;
-}
-
-.summary-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-}
-
-/* Entrées (first two cards grouped) */
-.summary-cards-grid .card:nth-child(1),
-.summary-cards-grid .card:nth-child(3) {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-  padding: 1.5rem;
-  width: 100%;
-}
-
-.summary-cards-grid .card:nth-child(1)::before {
-  content: "Entrées";
-  display: block;
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: #2563eb;
-  margin-bottom: 1rem;
-}
-
-.summary-cards-grid .card:nth-child(3) {
-  margin-top: -1.5rem; /* visually stack under Entrées */
-  border-top: 1px solid #e5e7eb;
-  box-shadow: none;
-  padding-top: 0.5rem;
-}
-
-/* Sorties (next two cards grouped) */
-.summary-cards-grid .card:nth-child(2),
-.summary-cards-grid .card:nth-child(4) {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-  padding: 1.5rem;
-  width: 100%;
-}
-
-.summary-cards-grid .card:nth-child(2)::before {
-  content: "Sorties";
-  display: block;
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: #dc2626;
-  margin-bottom: 1rem;
-}
-
-.summary-cards-grid .card:nth-child(4) {
-  margin-top: -1.5rem;
-  border-top: 1px solid #e5e7eb;
-  box-shadow: none;
-  padding-top: 0.5rem;
-}
-
-/* Card inner text tweaks */
-.card h3 {
-  font-size: 0.95rem;
-  color: #6b7280;
-  margin-bottom: 0.3rem;
-}
-
-.card p {
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: #111827;
-}
-
-/* ======= MOBILE ======= */
-@media (max-width: 768px) {
-  .summary-cards-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .summary-cards-grid .card:nth-child(3),
-  .summary-cards-grid .card:nth-child(4) {
-    margin-top: 0;
-    border-top: 1px solid #e5e7eb;
-  }
-
-  .summary-cards-grid .card:nth-child(1)::before,
-  .summary-cards-grid .card:nth-child(2)::before {
-    margin-bottom: 0.5rem;
-  }
-}
-
-        /* --- Carte des Performances --- */
-       .performance-card {
+.summary-group {
+  flex: 1;
+  min-width: 280px;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-  padding: 24px;
-  margin-top: 30px;
+  border-radius: 1rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   transition: all 0.3s ease;
 }
 
-.performance-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+.summary-group:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+.summary-group h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.summary-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summary-value {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #444;
+}
+
+/* --- Performance Section --- */
+.performance-card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+  margin-bottom: 3rem;
 }
 
 .section-title {
   font-size: 1.4rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #222;
-  margin-bottom: 16px;
-}
-
-.performance-layout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.performance-section {
-  flex: 1;
-  min-width: 300px;
-}
-
-.performance-section h3 {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 14px;
+  margin-bottom: 1.5rem;
 }
 
 .ranking-list {
@@ -218,25 +85,28 @@
 .ranking-list li {
   display: flex;
   align-items: center;
-  background: #fafafa;
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 10px;
-  transition: background 0.2s ease;
+  gap: 1rem;
+  background: #f7f8fa;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  transition: background 0.3s ease;
 }
 
 .ranking-list li:hover {
-  background: #f0f4ff;
+  background: #eef3ff;
 }
 
-.rank-badge,
-.rank-number {
+.rank-badge {
+  width: 40px;
+  height: 40px;
+  background: #007bff;
+  color: #fff;
+  border-radius: 50%;
   font-weight: 700;
-  font-size: 1rem;
-  color: #555;
-  margin-right: 10px;
-  min-width: 20px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-info {
@@ -247,424 +117,144 @@
   display: block;
   font-size: 1rem;
   color: #111;
-  font-weight: 600;
 }
 
 .user-info span {
-  display: block;
-  font-size: 0.85rem;
-  color: #666;
-}
-
-/* --- Avatar Circle --- */
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6b73ff, #000dff);
-  color: white;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 0.9rem;
-  margin-right: 12px;
-  text-transform: uppercase;
+  color: #555;
 }
 
-/* --- Progress Bars --- */
-.performance-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-  padding: 24px;
-  margin-top: 30px;
+.progress-bars {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.progress-bar {
+  height: 8px;
+  border-radius: 10px;
+  background: #ddd;
+  margin-top: 0.4rem;
+  overflow: hidden;
+}
+
+.progress-bar-inner {
+  height: 100%;
+  border-radius: 10px;
+}
+
+.progress-bar-inner.usd {
+  background: #007bff;
+  width: 75%;
+}
+
+.progress-bar-inner.fc {
+  background: #1abc9c;
+  width: 60%;
+}
+
+/* --- Button --- */
+.button-container {
+  text-align: right;
+  margin-bottom: 1.5rem;
+}
+
+.pdf-button {
+  background: #007bff;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.performance-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+.pdf-button:hover {
+  background: #0056cc;
 }
 
-.section-title {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #222;
-  margin-bottom: 16px;
-}
-
-.performance-layout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.performance-section {
-  flex: 1;
-  min-width: 300px;
-}
-
-.performance-section h3 {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 14px;
-}
-
-/* === Ranking List === */
-.ranking-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.ranking-list li {
-  background: #fafafa;
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  transition: background 0.2s ease;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.ranking-list li:hover {
-  background: #f0f4ff;
-}
-
-.rank-badge,
-.rank-number {
-  font-weight: 700;
-  font-size: 1rem;
-  color: #555;
-  min-width: 24px;
-  text-align: center;
-}
-
-/* === User Content === */
-.user-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.user-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6b73ff, #000dff);
-  color: white;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  text-transform: uppercase;
-}
-
-.user-name {
-  font-size: 1rem;
-  color: #111;
-  font-weight: 600;
-}
-
-.user-stats {
-  margin-top: 4px;
-}
-
-.user-stats span {
-  display: block;
-  font-size: 0.85rem;
-  color: #666;
-}
-
-/* === Progress Bars === */
-/* === Progress Bars with Labels === */
-.progress-bar {
-  position: relative;
-  height: 10px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #eaeaea;
-  margin-top: 8px;
-}
-
-.progress-fill {
-  height: 100%;
-  border-radius: 6px;
-  transition: width 0.4s ease;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 6px;
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.progress-label {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.progress-fill.usd {
-  background: linear-gradient(90deg, #007bff, #33a1fd);
-}
-
-.progress-fill.fc {
-  background: linear-gradient(90deg, #34d399, #059669);
-}
-
-
-/* === Full Ranking Section === */
-.full-ranking-list li {
+/* --- Table --- */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 1rem;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.05);
   background: #fff;
-  border: 1px solid #eee;
 }
 
-.full-ranking-list li .user-avatar {
-  width: 32px;
-  height: 32px;
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.transactions-table th, 
+.transactions-table td {
+  text-align: left;
+  padding: 1rem;
+}
+
+.transactions-table thead {
+  background-color: #f3f4f6;
+}
+
+.transactions-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.transactions-table tbody tr:hover {
+  background-color: #eef3ff;
+}
+
+.amount-entrees {
+  color: #1abc9c;
+  font-weight: 600;
+}
+
+.amount-sorties {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+/* --- Status Badges --- */
+.status-badge {
+  padding: 0.3rem 0.7rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
   font-size: 0.85rem;
+  text-transform: capitalize;
 }
 
-/* === Responsive === */
+.status-approved {
+  background: #e8f8f5;
+  color: #1abc9c;
+}
+
+.status-pending {
+  background: #fff8e1;
+  color: #f39c12;
+}
+
+.status-rejected {
+  background: #fdecea;
+  color: #e74c3c;
+}
+
+/* --- Responsive --- */
 @media (max-width: 768px) {
-  .performance-layout {
+  .summary-cards-grid {
     flex-direction: column;
+    gap: 1rem;
   }
 
-  .ranking-list li {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .user-header {
+  .summary-group {
     width: 100%;
   }
 
-  .user-avatar {
-    width: 36px;
-    height: 36px;
+  .table-wrapper {
+    overflow-x: scroll;
+  }
+
+  .transactions-table th, .transactions-table td {
+    padding: 0.7rem;
   }
 }
-
-
-        /* --- Wrapper de Table (pour responsivité) --- */
-        .table-wrapper {
-          overflow-x: auto;
-          background: #ffffff;
-          border-radius: 12px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-          border: 1px solid #e2e8f0;
-        }
-
-        /* --- Table des Transactions --- */
-        .transactions-table {
-          width: 100%;
-          border-collapse: collapse;
-          min-width: 900px; /* Force le scroll horizontal si besoin */
-        }
-
-        .transactions-table th,
-        .transactions-table td {
-          padding: 16px 20px;
-          text-align: left;
-          font-size: 0.9rem;
-          border-bottom: 1px solid #edf2f7;
-          color: #4a5568;
-          white-space: nowrap;
-        }
-
-        .transactions-table th {
-          background-color: #f7fafc; /* Fond d'en-tête très clair */
-          font-weight: 600;
-          color: #718096;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          font-size: 0.8rem;
-          border-top: none;
-        }
-
-        .transactions-table tr:last-child td {
-          border-bottom: none;
-        }
-
-        .transactions-table tbody tr {
-          transition: background-color 0.15s ease;
-        }
-
-        .transactions-table tbody tr:hover {
-          background-color: #fcfdfe;
-        }
-
-        /* --- Styles de Cellules Spécifiques --- */
-
-        /* Montant (Entrées/Sorties) */
-        .amount-cell {
-          font-weight: 600;
-        }
-        .amount-entrees {
-          color: #38a169; /* Vert */
-        }
-        .amount-sorties {
-          color: #e53e3e; /* Rouge */
-        }
-
-        /* Badge de Statut */
-        .status-badge {
-          padding: 5px 12px;
-          border-radius: 16px;
-          font-weight: 600;
-          font-size: 0.8rem;
-          text-transform: capitalize;
-          display: inline-block;
-          line-height: 1.4;
-        }
-
-        .status-approved {
-          background-color: #c6f6d5; /* Fond vert clair */
-          color: #2f855a; /* Texte vert foncé */
-        }
-        .status-pending {
-          background-color: #feebc8; /* Fond orange clair */
-          color: #c05621; /* Texte orange foncé */
-        }
-        .status-rejected {
-          background-color: #fed7d7; /* Fond rouge clair */
-          color: #c53030; /* Texte rouge foncé */
-        }
-        .status-unknown {
-          background-color: #e2e8f0; /* Fond gris clair */
-          color: #4a5568; /* Texte gris foncé */
-        }
-
-        /* --- Responsive Design --- */
-
-        /* Tablettes & Petits PC (max 1200px) */
-        @media (max-width: 1200px) {
-          .summary-cards-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-
-        /* Tablettes (max 992px) */
-        @media (max-width: 992px) {
-          .performance-layout {
-            grid-template-columns: 1fr;
-            gap: 40px;
-          }
-        }
-
-        /* Mobiles (max 768px) */
-        @media (max-width: 768px) {
-          .financier-container {
-            padding: 24px 16px;
-          }
-
-          .page-title {
-            font-size: 1.875rem; /* 30px */
-            margin-bottom: 24px;
-          }
-
-          .summary-cards-grid {
-            grid-template-columns: 1fr;
-            gap: 16px;
-          }
-          
-          .card-value {
-            font-size: 1.875rem; /* 30px */
-          }
-          
-          .button-container {
-            text-align: center;
-          }
-          
-          .pdf-button {
-            width: 100%;
-            padding: 14px;
-          }
-
-          /* --- Responsive Table (Stacking) --- */
-          .table-wrapper {
-             /* Permet au style ci-dessous de fonctionner sans wrapper */
-             overflow-x: hidden;
-             box-shadow: none;
-             border: none;
-             background: transparent;
-          }
-          .transactions-table {
-            min-width: auto;
-            border: none;
-            box-shadow: none;
-          }
-          .transactions-table thead {
-            display: none; /* Cache les en-têtes */
-          }
-          .transactions-table tr {
-            display: block;
-            margin-bottom: 16px;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-            border: 1px solid #e2e8f0;
-            overflow: hidden;
-          }
-          .transactions-table td {
-            display: flex; /* Change en flex pour alignement */
-            justify-content: space-between; /* Aligne libellé et valeur */
-            align-items: center;
-            padding: 14px 16px;
-            border-bottom: 1px solid #edf2f7;
-            text-align: right; /* Aligne la valeur à droite */
-            white-space: normal;
-          }
-          .transactions-table td:last-child {
-            border-bottom: none;
-          }
-          .transactions-table td::before {
-            content: attr(data-label); /* Utilise data-label pour le libellé */
-            font-weight: 600;
-            color: #718096;
-            text-align: left;
-            margin-right: 16px;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-          }
-        }
-
-        /* Ajustements fins pour mobile */
-        @media (max-width: 480px) {
-          .financier-container {
-            padding: 24px 12px;
-          }
-          
-          .performance-card {
-            padding: 24px;
-          }
-          
-          .page-title {
-            font-size: 1.75rem; /* 28px */
-          }
-          
-          .section-title {
-            font-size: 1.25rem; /* 20px */
-          }
-        }
-      

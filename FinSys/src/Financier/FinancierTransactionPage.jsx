@@ -39,7 +39,7 @@ const FinancierTransactionsPage = () => {
   const fetchTransactions = async () => {
     try {
       const { data } = await axios.get(
-        "https://finsys.onrender.com/api/transactions/all", // Updated endpoint
+        "https://finsys.onrender.com/api/transactions/all",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const sortedTx = data.sort((a, b) => new Date(b.date) - new Date(a.date)); // Dernières en premier
@@ -126,19 +126,19 @@ const FinancierTransactionsPage = () => {
         const user = users.find(u => u.id === userId);
         return {
           id: userId,
-          name: user ? `${user.name} ${user.surname}` : "Inconnu",
+          name: user ? `${user.name} ${user.surname}` : userId, // Show name or ID instead of "Inconnu"
           txCount: count,
           contributions: userContributions[userId] || { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } },
         };
       })
       .sort((a, b) => b.txCount - a.txCount);
 
-    const topUser = sortedUsers[0];
+    const topUsers = sortedUsers.slice(0, 3); // Get top 3
 
     setPerformanceData({
       totalTx,
       sortedUsers,
-      topUser,
+      topUsers, // Updated to top 3
       aggregates,
     });
   };
@@ -147,7 +147,7 @@ const FinancierTransactionsPage = () => {
   const downloadPDF = () => {
     const doc = new jsPDF();
     doc.text("Table des Transactions", 20, 10);
-    autoTable(doc, {  // Fixed usage
+    autoTable(doc, {
       head: [["ID", "Utilisateur", "Date", "Montant", "Devise", "Canal", "Motif", "Statut"]],
       body: transactions.map(tx => [
         tx.id,
@@ -192,14 +192,20 @@ const FinancierTransactionsPage = () => {
       {performanceData && (
         <div className="card p-4 shadow rounded mb-6">
           <h2 className="text-xl font-bold mb-4">Métriques de Performance</h2>
-          {performanceData.topUser && (
+          {performanceData.topUsers && performanceData.topUsers.length > 0 && (
             <div className="mb-4">
-              <h3>Meilleur Contributeur</h3>
-              <p><strong>{performanceData.topUser.name}</strong> a ajouté le plus de transactions: {performanceData.topUser.txCount} sur {performanceData.totalTx} total.</p>
+              <h3>Top 3 Contributeurs</h3>
+              <ul>
+                {performanceData.topUsers.map((user, index) => (
+                  <li key={user.id}>
+                    {index + 1}. <strong>{user.name}</strong> - {user.txCount} transactions
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           <div className="mb-4">
-            <h3>Classement des Utilisateurs</h3>
+            <h3>Classement Complet des Utilisateurs</h3>
             <ul>
               {performanceData.sortedUsers.map((user, index) => (
                 <li key={user.id}>

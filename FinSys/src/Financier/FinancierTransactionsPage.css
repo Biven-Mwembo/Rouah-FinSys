@@ -170,103 +170,171 @@
 }
 
         /* --- Carte des Performances --- */
-        .performance-card {
-          background-color: #ffffff;
-          border-radius: 12px;
-          padding: 24px 32px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-          border: 1px solid #e2e8f0;
-          margin-bottom: 32px;
-        }
+       .performance-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  margin-top: 30px;
+  transition: all 0.3s ease;
+}
 
-        .performance-layout {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 32px;
-        }
+.performance-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
 
-        .performance-section h3 {
-          font-size: 1.125rem; /* 18px */
-          font-weight: 600;
-          color: #4a5568;
-          margin-bottom: 16px;
-        }
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 16px;
+}
 
-        .ranking-list {
-          list-style: none;
-          padding-left: 0;
-        }
+.performance-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
 
-        .ranking-list li {
-          display: flex;
-          align-items: center;
-          padding: 14px 0;
-          border-bottom: 1px solid #edf2f7;
-          font-size: 0.95rem;
-        }
+.performance-section {
+  flex: 1;
+  min-width: 300px;
+}
 
-        .ranking-list li:last-child {
-          border-bottom: none;
-        }
+.performance-section h3 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 14px;
+}
 
-        .ranking-list .user-info {
-          display: flex;
-          flex-direction: column;
-          line-height: 1.4;
-        }
+.ranking-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 
-        .ranking-list .user-info strong {
-          color: #2d3748;
-          font-weight: 600;
-        }
+.ranking-list li {
+  display: flex;
+  align-items: center;
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  transition: background 0.2s ease;
+}
 
-        .ranking-list .user-info span {
-          color: #718096;
-          font-size: 0.85rem;
-        }
+.ranking-list li:hover {
+  background: #f0f4ff;
+}
 
-        /* Top 3 Spécifique */
-        .top-user-item .rank-badge {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background-color: #e2e8f0;
-          color: #4a5568;
-          font-weight: 700;
-          font-size: 0.9rem;
-          margin-right: 16px;
-        }
+.rank-badge,
+.rank-number {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #555;
+  margin-right: 10px;
+  min-width: 20px;
+  text-align: center;
+}
 
-        .top-user-item:nth-child(1) .rank-badge {
-          background-color: #f6e05e; /* Or */
-          color: #744210;
-        }
-        .top-user-item:nth-child(2) .rank-badge {
-          background-color: #cbd5e0; /* Argent */
-          color: #4a5568;
-        }
-        .top-user-item:nth-child(3) .rank-badge {
-          background-color: #e9d8c7; /* Bronze */
-          color: #8c5a10;
-        }
+.user-info {
+  flex: 1;
+}
 
-        /* Classement Complet Spécifique */
-        .full-ranking-list {
-          max-height: 250px;
-          overflow-y: auto;
-          padding-right: 10px; /* Pour la barre de scroll */
-        }
+.user-info strong {
+  display: block;
+  font-size: 1rem;
+  color: #111;
+  font-weight: 600;
+}
 
-        .full-ranking-list .rank-number {
-          color: #a0aec0;
-          font-weight: 600;
-          width: 32px; /* Aligner avec les badges */
-          margin-right: 16px;
-          text-align: left;
-        }
+.user-info span {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* --- Avatar Circle --- */
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6b73ff, #000dff);
+  color: white;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  margin-right: 12px;
+  text-transform: uppercase;
+}
+
+/* --- Progress Bars --- */
+.progress-container {
+  margin-top: 6px;
+}
+
+.progress-bar {
+  height: 6px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #eaeaea;
+  margin-top: 4px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}
+
+.progress-fill.usd {
+  background: linear-gradient(90deg, #007bff, #33a1fd);
+}
+
+.progress-fill.fc {
+  background: linear-gradient(90deg, #34d399, #059669);
+}
+
+/* --- Full Ranking Style --- */
+.full-ranking-list li {
+  background: #fff;
+  border: 1px solid #eee;
+}
+
+.full-ranking-list li .user-avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 0.8rem;
+}
+
+.full-ranking-list li .user-info strong {
+  font-size: 0.9rem;
+}
+
+.full-ranking-list li .progress-container {
+  margin-top: 4px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .performance-layout {
+    flex-direction: column;
+  }
+
+  .ranking-list li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .user-avatar {
+    margin-bottom: 6px;
+  }
+}
+
 
         /* --- Bouton PDF --- */
         .button-container {

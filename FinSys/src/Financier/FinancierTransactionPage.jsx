@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import jsPDF from "https://esm.sh/jspdf@2.5.1";
-import autoTable from "https://esm.sh/jspdf-autotable@3.8.2";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import "./FinancierTransactionsPage.css";
 
 // Fonction pour formater la date
 const formatDate = (dateString) => {

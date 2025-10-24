@@ -169,12 +169,37 @@ const FinancierTransactionsPage = () => {
         <h1 className="page-title">Transactions Financier</h1>
 
         {/* Cartes des totaux */}
-        <div className="summary-cards-grid">
-          <Card title="Entrées USD ($)" value={dollarsSum[0]} />
-          <Card title="Sorties USD ($)" value={dollarsSum[1]} />
-          <Card title="Entrées FC" value={fcSum[0]} />
-          <Card title="Sorties FC" value={fcSum[1]} />
-        </div>
+       {/* Summary cards (Entrées & Sorties) */}
+<div className="summary-cards-grid">
+  <div className="summary-group">
+    <h2>Entrées</h2>
+    <div className="summary-values">
+      <div className="summary-value">
+        <span>USD</span>
+        <span>{dollarsSum[0].toFixed(2)}</span>
+      </div>
+      <div className="summary-value">
+        <span>FC</span>
+        <span>{fcSum[0].toFixed(2)}</span>
+      </div>
+    </div>
+  </div>
+
+  <div className="summary-group">
+    <h2>Sorties</h2>
+    <div className="summary-values">
+      <div className="summary-value">
+        <span>USD</span>
+        <span>{dollarsSum[1].toFixed(2)}</span>
+      </div>
+      <div className="summary-value">
+        <span>FC</span>
+        <span>{fcSum[1].toFixed(2)}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 
         {/* Métriques de Performance */}
         {performanceData && (

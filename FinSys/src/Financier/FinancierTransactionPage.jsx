@@ -33,6 +33,7 @@ const FinancierTransactionsPage = () => {
   const [dollarsSum, setDollarsSum] = useState([0, 0]); // [Entrées, Sorties]
   const [fcSum, setFcSum] = useState([0, 0]); // [Entrées, Sorties]
   const [loading, setLoading] = useState(true);
+  const [usersLoaded, setUsersLoaded] = useState(false); // New state for users
   const token = localStorage.getItem("token");
 
   // Récupérer les transactions
@@ -60,8 +61,10 @@ const FinancierTransactionsPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUsers(data);
+      setUsersLoaded(true); // Set loaded after fetching
     } catch (err) {
       console.error("Erreur lors de la récupération des utilisateurs:", err);
+      setUsersLoaded(true); // Still set to true to avoid infinite loading
     }
   };
 
@@ -126,7 +129,7 @@ const FinancierTransactionsPage = () => {
         const user = users.find(u => u.id === userId);
         return {
           id: userId,
-          name: user ? `${user.name} ${user.surname}` : userId, // Show name or ID instead of "Inconnu"
+          name: user ? `${user.name} ${user.surname}` : userId, // Show name or ID
           txCount: count,
           contributions: userContributions[userId] || { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } },
         };
@@ -138,7 +141,7 @@ const FinancierTransactionsPage = () => {
     setPerformanceData({
       totalTx,
       sortedUsers,
-      topUsers, // Updated to top 3
+      topUsers,
       aggregates,
     });
   };
@@ -174,7 +177,7 @@ const FinancierTransactionsPage = () => {
     fetchUsers();
   }, []);
 
-  if (loading) return <p>Chargement des transactions...</p>;
+  if (loading || !usersLoaded) return <p>Chargement des données...</p>; // Wait for both
 
   return (
     <div className="container mx-auto p-6">
@@ -242,7 +245,7 @@ const FinancierTransactionsPage = () => {
           {transactions.map((tx) => (
             <tr key={tx.id}>
               <td className="border px-4 py-2">{tx.id}</td>
-              <td className="border px-4 py-2">{getUserName(tx.user_id)}</td>
+              <td className="border px-4 py-2">{getUserName(tx.user_id)}</td> {/* Now shows name/surname */}
               <td className="border px-4 py-2">{formatDate(tx.date)}</td>
               <td className="border px-4 py-2">{tx.amount}</td>
               <td className="border px-4 py-2">{tx.currency}</td>

@@ -1,182 +1,187 @@
-/* ---------- Layout ---------- */
-.financier-container {
-  background: radial-gradient(circle at top left, #0f172a, #020617 80%);
-  min-height: 100vh;
-  padding: 2rem 1rem;
-  color: #e2e8f0;
-  font-family: "Inter", "Poppins", sans-serif;
+/* ======= GLOBAL STYLES ======= */
+body {
+  background-color: #f9fafb;
+  color: #1f2937;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
-.financier-container h1 {
-  font-size: 2rem;
+.container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+/* ======= TITLES ======= */
+h1 {
+  color: #111827;
   font-weight: 700;
-  margin-bottom: 2rem;
   text-align: center;
-  color: #f1f5f9;
-  letter-spacing: -0.02em;
+  margin-bottom: 2rem;
+  font-size: 2rem;
 }
 
-/* ---------- Metric Cards ---------- */
-.metrics-grid {
+h2, h3 {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* ======= CARDS (Entrées & Sorties) ======= */
+.grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
-.metric-card {
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  padding: 1.5rem 2rem;
-  box-shadow: 0 4px 20px rgba(0, 255, 153, 0.05);
-  transition: all 0.3s ease;
+.card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+  padding: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.metric-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 255, 153, 0.15);
-  transform: translateY(-3px);
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
-.metric-card h3 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #a5f3fc;
+.card h3 {
+  font-size: 1.1rem;
+  color: #2563eb;
+  margin-bottom: 0.5rem;
+}
+
+.card p {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* ======= PERFORMANCE METRICS ======= */
+.card.mb-6 {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+}
+
+.card.mb-6 h2 {
+  border-left: 5px solid #2563eb;
+  padding-left: 0.5rem;
   margin-bottom: 1rem;
 }
 
-.metric-line {
-  display: flex;
-  justify-content: space-between;
+.card.mb-6 ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.card.mb-6 li {
   padding: 0.5rem 0;
-  color: #e2e8f0;
-  font-size: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.95rem;
 }
 
-.metric-line strong {
-  color: #22d3ee;
-  font-weight: 700;
+.card.mb-6 li:last-child {
+  border-bottom: none;
 }
 
-/* ---------- Button ---------- */
-.download-btn {
-  background: linear-gradient(90deg, #10b981, #0ea5e9);
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
+.card.mb-6 li strong {
+  color: #111827;
+}
+
+/* ======= BUTTON ======= */
+button {
+  background-color: #2563eb;
   color: #fff;
   font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
   cursor: pointer;
-  display: block;
-  margin: 0 auto 2rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  transition: background-color 0.3s ease;
 }
 
-.download-btn:hover {
-  background: linear-gradient(90deg, #0ea5e9, #10b981);
-  box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
-  transform: translateY(-2px);
+button:hover {
+  background-color: #1e40af;
 }
 
-/* ---------- Table ---------- */
-.table-container {
-  overflow-x: auto;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 16px;
-  padding: 1rem;
-  box-shadow: inset 0 0 0.5px rgba(255, 255, 255, 0.1);
+button:active {
+  transform: scale(0.98);
 }
 
+/* ======= TABLE ======= */
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px;
-}
-
-thead {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-}
-
-th, td {
-  padding: 1rem;
-  text-align: left;
-  font-size: 0.95rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  white-space: nowrap;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
 th {
-  color: #a5f3fc;
+  background-color: #f3f4f6;
+  color: #374151;
+  text-align: left;
+  padding: 12px;
   font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.04em;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-tbody tr {
-  transition: all 0.2s ease;
+td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1f2937;
 }
 
-tbody tr:hover {
-  background: rgba(255, 255, 255, 0.05);
+tr:hover {
+  background-color: #f9fafb;
+  transition: background 0.2s ease-in-out;
 }
 
-.status {
-  font-weight: 600;
-  text-transform: capitalize;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  display: inline-block;
-}
-
-.status.approved {
-  background: rgba(16, 185, 129, 0.15);
-  color: #4ade80;
-}
-
-.status.pending {
-  background: rgba(234, 179, 8, 0.15);
-  color: #facc15;
-}
-
-.status.rejected {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-}
-
-/* ---------- Scrollbar Styling ---------- */
-.table-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.table-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(90deg, #10b981, #0ea5e9);
-  border-radius: 10px;
-}
-
-/* ---------- Responsive ---------- */
+/* ======= MOBILE RESPONSIVENESS ======= */
 @media (max-width: 768px) {
-  .metric-card {
-    text-align: center;
-    padding: 1.25rem;
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    padding: 1rem;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-radius: 10px;
   }
 
   th, td {
-    font-size: 0.85rem;
-    padding: 0.75rem;
+    padding: 10px 14px;
+    font-size: 0.9rem;
   }
 
-  .table-container {
-    padding: 0.5rem;
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  button {
+    width: 100%;
   }
 }
 
-.loading {
-  text-align: center;
-  padding: 3rem;
-  color: #93c5fd;
-  font-size: 1.25rem;
+/* ======= SMOOTH SCROLLBAR ======= */
+table::-webkit-scrollbar {
+  height: 6px;
+}
+table::-webkit-scrollbar-thumb {
+  background-color: #9ca3af;
+  border-radius: 10px;
 }

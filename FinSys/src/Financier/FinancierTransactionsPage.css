@@ -48,42 +48,126 @@
         }
 
         /* --- Grille des Cartes Résumé --- */
-        .summary-cards-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 24px;
-          margin-bottom: 32px;
-        }
+      /* ======= SUMMARY CARDS ======= */
+.summary-cards-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
 
-        .summary-card {
-          background-color: #ffffff;
-          border-radius: 12px;
-          padding: 24px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-          border: 1px solid #e2e8f0;
-        }
+/* Group the first 2 Entrées cards into one visual block */
+.summary-cards-grid .card:nth-child(1),
+.summary-cards-grid .card:nth-child(3) {
+  order: 1;
+}
 
-        .summary-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
-        }
+.summary-cards-grid .card:nth-child(2),
+.summary-cards-grid .card:nth-child(4) {
+  order: 2;
+}
 
-        .card-title {
-          font-weight: 500;
-          margin-bottom: 8px;
-          color: #718096; /* Gris moyen */
-          font-size: 0.9rem; /* 14px */
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
+/* Combine each pair (Entrées + Sorties) vertically inside larger containers */
+.summary-cards-grid {
+  position: relative;
+}
 
-        .card-value {
-          font-size: 2.125rem; /* 34px */
-          font-weight: 700;
-          color: #2d3748;
-          line-height: 1.2;
-        }
+.summary-cards-grid::before,
+.summary-cards-grid::after {
+  content: "";
+  display: block;
+}
+
+.summary-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+/* Entrées (first two cards grouped) */
+.summary-cards-grid .card:nth-child(1),
+.summary-cards-grid .card:nth-child(3) {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  width: 100%;
+}
+
+.summary-cards-grid .card:nth-child(1)::before {
+  content: "Entrées";
+  display: block;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #2563eb;
+  margin-bottom: 1rem;
+}
+
+.summary-cards-grid .card:nth-child(3) {
+  margin-top: -1.5rem; /* visually stack under Entrées */
+  border-top: 1px solid #e5e7eb;
+  box-shadow: none;
+  padding-top: 0.5rem;
+}
+
+/* Sorties (next two cards grouped) */
+.summary-cards-grid .card:nth-child(2),
+.summary-cards-grid .card:nth-child(4) {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  width: 100%;
+}
+
+.summary-cards-grid .card:nth-child(2)::before {
+  content: "Sorties";
+  display: block;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #dc2626;
+  margin-bottom: 1rem;
+}
+
+.summary-cards-grid .card:nth-child(4) {
+  margin-top: -1.5rem;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: none;
+  padding-top: 0.5rem;
+}
+
+/* Card inner text tweaks */
+.card h3 {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 0.3rem;
+}
+
+.card p {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+/* ======= MOBILE ======= */
+@media (max-width: 768px) {
+  .summary-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-cards-grid .card:nth-child(3),
+  .summary-cards-grid .card:nth-child(4) {
+    margin-top: 0;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .summary-cards-grid .card:nth-child(1)::before,
+  .summary-cards-grid .card:nth-child(2)::before {
+    margin-bottom: 0.5rem;
+  }
+}
 
         /* --- Carte des Performances --- */
         .performance-card {

@@ -28,12 +28,10 @@ const Card = ({ title, value }) => (
 
 const FinancierTransactionsPage = () => {
   const [transactions, setTransactions] = useState([]);
-  const [users, setUsers] = useState([]);
   const [performanceData, setPerformanceData] = useState(null);
   const [dollarsSum, setDollarsSum] = useState([0, 0]); // [Entrées, Sorties]
   const [fcSum, setFcSum] = useState([0, 0]); // [Entrées, Sorties]
   const [loading, setLoading] = useState(true);
-  const [usersLoaded, setUsersLoaded] = useState(false);
   const token = localStorage.getItem("token");
 
   // Récupérer les transactions
@@ -45,6 +43,7 @@ const FinancierTransactionsPage = () => {
       );
       const sortedTx = data.sort((a, b) => new Date(b.date) - new Date(a.date)); // Dernières en premier
       setTransactions(sortedTx);
+      calculatePerformance(sortedTx);
       setLoading(false);
     } catch (err) {
       console.error("Erreur lors de la récupération des transactions:", err);
@@ -52,27 +51,11 @@ const FinancierTransactionsPage = () => {
     }
   };
 
-  // Récupérer les utilisateurs
-  const fetchUsers = async () => {
-    try {
-      const { data } = await axios.get(
-        "https://finsys.onrender.com/api/users/all",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setUsers(data);
-      setUsersLoaded(true);
-    } catch (err) {
-      console.error("Erreur lors de la récupération des utilisateurs:", err);
-      setUsersLoaded(true);
-    }
-  };
-
   // Calculer les métriques de performance et les sommes
   const calculatePerformance = (txData) => {
-    if (!txData || txData.length === 0 || users.length === 0) return; // Attendre les deux
+    if (!txData || txData.length === 0) return;
 
-    console.log("Users array:", users); // Debug users
-    console.log("Statuses in transactions:", txData.map(tx => tx.status)); // Debug statuses
+    console.log("Statuses in transactions:", txData.map(tx => tx.status));
 
     // Filter for approved transactions (case-insensitive)
     const approvedTx = txData.filter((tx) => tx.status?.toLowerCase() === "approved");
@@ -131,11 +114,9 @@ const FinancierTransactionsPage = () => {
 
     const sortedUsers = Object.entries(userTxCounts)
       .map(([userId, count]) => {
-        const user = users.find(u => u.id === userId);
-        console.log("For userId:", userId, "Found user:", user); // Debug user lookup
         return {
           id: userId,
-          name: user ? `${user.name} ${user.surname}` : userId,
+          name: userId, // Show ID since no users fetched
           txCount: count,
           contributions: userContributions[userId] || { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } },
         };
@@ -160,7 +141,7 @@ const FinancierTransactionsPage = () => {
       head: [["ID", "Utilisateur", "Date", "Montant", "Devise", "Canal", "Motif", "Statut"]],
       body: transactions.map(tx => [
         tx.id,
-        getUserName(tx.user_id),
+        getUserName(tx),
         formatDate(tx.date),
         tx.amount,
         tx.currency,
@@ -172,26 +153,16 @@ const FinancierTransactionsPage = () => {
     doc.save("transactions.pdf");
   };
 
-  // Obtenir le nom de l'utilisateur
-  const getUserName = (userId) => {
-    const user = users.find(u => u.id === userId);
-    console.log("Looking for userId:", userId, "Found:", user); // Debug
-    return user ? `${user.name} ${user.surname}` : userId || "N/A";
+  // Obtenir le nom de l'utilisateur (from tx.user if available)
+  const getUserName = (tx) => {
+    return tx.user ? `${tx.user.name} ${tx.user.surname}` : tx.user_id || "N/A";
   };
 
   useEffect(() => {
     fetchTransactions();
-    fetchUsers();
   }, []);
 
-  // New useEffect to calculate performance when data is ready
-  useEffect(() => {
-    if (transactions.length > 0 && users.length > 0) {
-      calculatePerformance(transactions);
-    }
-  }, [transactions, users]);
-
-  if (loading || !usersLoaded) return <p>Chargement des données...</p>;
+  if (loading) return <p>Chargement des données...</p>;
 
   return (
     <div className="container mx-auto p-6">
@@ -259,7 +230,7 @@ const FinancierTransactionsPage = () => {
           {transactions.map((tx) => (
             <tr key={tx.id}>
               <td className="border px-4 py-2">{tx.id}</td>
-              <td className="border px-4 py-2">{getUserName(tx.user_id)}</td>
+              <td className="border px-4 py-2">{getUserName(tx)}</td>
               <td className="border px-4 py-2">{formatDate(tx.date)}</td>
               <td className="border px-4 py-2">{tx.amount}</td>
               <td className="border px-4 py-2">{tx.currency}</td>

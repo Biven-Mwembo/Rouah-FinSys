@@ -6,6 +6,7 @@ const API_BASE_URL = "https://finsys.onrender.com/api";
 const AdminRequestsPage = () => {
     // State for data
     const [requests, setRequests] = useState([]);
+    const [users, setUsers] = useState([]); // New state for users
     const [loading, setLoading] = useState(true);
 
     // State for Modals and Toasts
@@ -51,8 +52,32 @@ const AdminRequestsPage = () => {
         }
     };
 
+    // New function to fetch users
+    const fetchUsers = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/all`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`HTTP error! Status: ${response.status}. Message: ${errorBody || response.statusText}`);
+            }
+
+            const data = await response.json();
+            setUsers(data);
+        } catch (error) {
+            console.error("Error fetching users:", error);
+            showNotification(`Failed to load users. Details: ${error.message}`, 'error');
+        }
+    };
+
     useEffect(() => {
         fetchRequests();
+        fetchUsers(); // Fetch users on load
     }, []);
 
     // 1. Initial click sets up the modal
@@ -142,6 +167,11 @@ const confirmAction = async () => {
         </div>
     );
 
+    // Helper to get user name by ID
+    const getUserName = (userId) => {
+        const user = users.find(u => u.id === userId);
+        return user ? `${user.name} ${user.surname}` : userId || "N/A";
+    };
 
     return (
         <div className="admin-container">
@@ -176,7 +206,7 @@ const confirmAction = async () => {
                                 {requests.map((tx, i) => (
                                     <tr key={tx.id || i}>
                                         <td>{i + 1}</td>
-                                        <td>{tx.user ? `${tx.user.name} ${tx.user.surname}` : tx.user_id || "N/A"}</td>
+                                        <td>{getUserName(tx.user_id)}</td> {/* Updated to show name */}
                                         <td>{tx.date ? new Date(tx.date).toLocaleDateString("en-GB") : "N/A"}</td>
                                         <td>{tx.currency === "$" ? (Number(tx.amount) || 0).toFixed(2) : "0.00"}</td>
                                         <td>{tx.currency === "FC" ? (Number(tx.amount) || 0).toFixed(2) : "0.00"}</td>

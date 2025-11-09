@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import "./Transactions.css";
 import axios from "axios";
+import jsPDF from "jspdf";  // ✅ Ensure installed: npm install jspdf
+import autoTable from "jspdf-autotable";  // ✅ Ensure installed: npm install jspdf-autotable
 
 const API_BASE_URL = "https://finsys.onrender.com/api";
 
@@ -22,14 +24,14 @@ const formatDate = (dateString) => {
 export default function AdminTransactionsPage() {
     const [transactions, setTransactions] = useState([]);
     const [users, setUsers] = useState([]);
-    const [usersLoaded, setUsersLoaded] = useState(false);  // ✅ NEW: Track users loading
+    const [usersLoaded, setUsersLoaded] = useState(false);
     const [banner, setBanner] = useState({ message: "", type: "" });
-    const [editingTx, setEditingTx] = useState(null); // Controls Edit Modal
-    const [confirmDeleteTxId, setConfirmDeleteTxId] = useState(null); // Controls Delete Modal
+    const [editingTx, setEditingTx] = useState(null);
+    const [confirmDeleteTxId, setConfirmDeleteTxId] = useState(null);
 
     const token = localStorage.getItem("token");
 
-    // ✅ FETCH ALL TRANSACTIONS (updated to map userName after users load)
+    // ✅ FETCH ALL TRANSACTIONS
     const fetchAllTransactions = () => {
         if (!token) {
             setBanner({ message: "Authentication token missing.", type: "error" });
@@ -48,10 +50,9 @@ export default function AdminTransactionsPage() {
                 return res.json();
             })
             .then((data) => {
-                // ✅ UPDATED: Map userName using getUserFullName (will resolve to full name if users are loaded)
                 const mappedData = data.map(tx => ({
                     ...tx,
-                    userName: getUserFullName(tx.user_id),  // ✅ Use helper to get full name
+                    userName: getUserFullName(tx.user_id),
                 }));
                 setTransactions(mappedData);
             })
@@ -60,7 +61,7 @@ export default function AdminTransactionsPage() {
             );
     };
 
-    // ✅ FETCH ALL USERS (unchanged, but now sets usersLoaded)
+    // ✅ FETCH ALL USERS
     const fetchAllUsers = () => {
         if (!token) {
             setBanner({ message: "Authentication token missing.", type: "error" });
@@ -80,40 +81,85 @@ export default function AdminTransactionsPage() {
             })
             .then((data) => {
                 setUsers(data);
-                setUsersLoaded(true);  // ✅ Mark as loaded
+                setUsersLoaded(true);
             })
             .catch((error) =>
                 setBanner({ message: `Failed to fetch users: ${error.message}`, type: "error" })
             );
     };
 
-    // ✅ NEW: Helper function to get full user name
+    // ✅ Helper function to get full user name
     const getUserFullName = (userId) => {
         const user = users.find(u => u.id === userId);
-        const fullName = user ? `${user.name || ''} ${user.surname || ''}`.trim() : userId || "N/A";
-        console.log(`getUserFullName(${userId}): ${fullName}`);  // ✅ Debug log (remove later)
-        return fullName;
+        return user ? `${user.name || ''} ${user.surname || ''}`.trim() : userId || "N/A";
     };
 
-    // ✅ UPDATED: useEffect to fetch both
+    // ✅ DOWNLOAD FUNCTIONS
+    const downloadPDF = () => {
+        const doc = new jsPDF();
+        doc.text("All Transactions", 20, 10);
+        autoTable(doc, {
+            head: [["User", "Date", "Amount", "Currency", "Channel", "Motif", "Status"]],
+            body: transactions.map(tx => [
+                tx.userName,  // ✅ Full name
+                formatDate(tx.date),
+                tx.amount,
+                tx.currency,
+                tx.channel,
+                tx.motif,
+                tx.status,
+            ]),
+        });
+        doc.save("all_transactions.pdf");
+    };
+
+    const downloadCSV = () => {
+        const csvHeaders = ["User", "Date", "Amount", "Currency", "Channel", "Motif", "Status"];
+        const csvRows = transactions.map(tx => [
+            tx.userName,  // ✅ Full name
+            formatDate(tx.date),
+            tx.amount,
+            tx.currency,
+            tx.channel,
+            tx.motif,
+            tx.status,
+        ]);
+        const csvContent = [csvHeaders, ...csvRows].map(row => row.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "all_transactions.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleDownload = () => {
+        const format = window.confirm("Click OK for PDF, Cancel for CSV");
+        if (format) {
+            downloadPDF();
+        } else {
+            downloadCSV();
+        }
+    };
+
     useEffect(() => {
         fetchAllTransactions();
         fetchAllUsers();
     }, []);
 
-    // ✅ NEW: Separate useEffect to re-map transactions when users load
     useEffect(() => {
         if (usersLoaded && transactions.length > 0) {
             setTransactions(prev => prev.map(tx => ({
                 ...tx,
-                userName: getUserFullName(tx.user_id),  // ✅ Re-map with full names
+                userName: getUserFullName(tx.user_id),
             })));
         }
-    }, [usersLoaded, users]);  // Re-run when users are loaded or updated
+    }, [usersLoaded, users]);
 
     // --- EDIT HANDLERS ---
     const handleEdit = (transaction) => {
-        console.log("Editing transaction ID:", transaction.id);  // Should log "TR068"
+        console.log("Editing transaction ID:", transaction.id);
         const dateValue = transaction.date ? new Date(transaction.date).toISOString().split('T')[0] : '';
         setEditingTx({ ...transaction, date: dateValue });
     };
@@ -140,10 +186,9 @@ export default function AdminTransactionsPage() {
         };
 
         try {
-            // ⭐ UPDATED URL: Changed /transactions/${id} to /transactions/item/${id}
             console.log(`PATCH URL: ${API_BASE_URL}/transactions/item/${id}`);
             const res = await axios.patch(
-                `${API_BASE_URL}/transactions/item/${id}`, // <--- ROUTE FIX HERE
+                `${API_BASE_URL}/transactions/item/${id}`,
                 updateData,
                 {
                     headers: {
@@ -171,21 +216,19 @@ export default function AdminTransactionsPage() {
     
     // --- DELETE HANDLERS ---
     const confirmDelete = (id) => {
-        setConfirmDeleteTxId(id); // Show modal for this ID
+        setConfirmDeleteTxId(id);
     };
 
     const cancelDelete = () => {
-        setConfirmDeleteTxId(null); // Hide modal
+        setConfirmDeleteTxId(null);
     };
     
     const handleDelete = async (id) => {
-        // Hide the modal immediately after confirmation
-        setConfirmDeleteTxId(null); 
+        setConfirmDeleteTxId(null);
 
         try {
-            // ⭐ UPDATED URL: Changed /transactions/${id} to /transactions/item/${id}
             const res = await axios.delete(
-                `${API_BASE_URL}/transactions/item/${id}`, // <--- ROUTE FIX HERE
+                `${API_BASE_URL}/transactions/item/${id}`,
                 {
                     headers: { 
                         Authorization: `Bearer ${token}` 
@@ -195,8 +238,7 @@ export default function AdminTransactionsPage() {
 
             if (res.status === 204 || res.status === 200 || res.status === 202) {
                 setBanner({ message: "🗑️ Transaction deleted successfully!", type: "success" });
-                // Optimistically remove from state
-                setTransactions(prev => prev.filter(tx => tx.id !== id)); 
+                setTransactions(prev => prev.filter(tx => tx.id !== id));
             } else {
                 throw new Error("Failed to delete transaction with an unexpected response.");
             }
@@ -320,6 +362,10 @@ export default function AdminTransactionsPage() {
             <div className="card">
                 <div className="table-header">
                     <h2>All Transactions</h2>
+                    {/* ✅ NEW: Télécharger Button */}
+                    <button className="action-btn download-btn" onClick={handleDownload}>
+                        Télécharger
+                    </button>
                 </div>
 
                 <div className="table-responsive">
@@ -340,7 +386,7 @@ export default function AdminTransactionsPage() {
                             {transactions.length > 0 ? (
                                 transactions.map((tx) => (
                                     <tr key={tx.id}>
-                                        <td><strong>{tx.userName}</strong></td>  {/* ✅ Now shows full name */}
+                                        <td><strong>{tx.userName}</strong></td>
                                         <td>{formatDate(tx.date)}</td>
                                         <td>{tx.amount}</td>
                                         <td>{tx.currency}</td>
@@ -366,7 +412,6 @@ export default function AdminTransactionsPage() {
                 <div className="table-header">
                     <h2>All Registered Users</h2>
                 </div>
-                {/* ... Users table JSX (no change needed) ... */}
                 <div className="table-responsive">
                     <table className="transactions-table admin-table">
                         <thead>

@@ -7,8 +7,7 @@ const API_BASE_URL = "https://finsys.onrender.com/api";
 
 // --- START: Internal Components (Unchanged) ---
 
-
-// ... (SuccessToast, ConfirmationModal, MessageBox, PendingPopup, Card, Navbar components remain unchanged)
+// SuccessToast (Included here for completeness, as it uses successMessage state)
 const SuccessToast = ({ message }) => {
   return (
     <div
@@ -48,6 +47,7 @@ const SuccessToast = ({ message }) => {
   );
 };
 
+// ConfirmationModal (Unchanged)
 const ConfirmationModal = ({ isOpen, message, onConfirm, onCancel }) => {
   if (!isOpen) return null;
 
@@ -128,6 +128,7 @@ const ConfirmationModal = ({ isOpen, message, onConfirm, onCancel }) => {
 };
 
 
+// MessageBox (Unchanged)
 const MessageBox = ({ message, onClose }) => (
   <div
     className="message-box"
@@ -164,7 +165,7 @@ const MessageBox = ({ message, onClose }) => (
   </div>
 );
 
-// --- Pending Popup Component (Your provided component) ---
+// PendingPopup (Unchanged)
 const PendingPopup = ({ message, onClose }) => {
   return (
     <div
@@ -218,7 +219,7 @@ const PendingPopup = ({ message, onClose }) => {
   );
 };
 
-// ... (Card and Navbar components remain unchanged)
+// Card (Unchanged)
 const Card = ({ title, balance, fcBalance, color }) => (
   <div
     className={`card ${color}`}
@@ -245,6 +246,7 @@ const Card = ({ title, balance, fcBalance, color }) => (
   </div>
 );
 
+// Navbar (Unchanged)
 const Navbar = () => {
   const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState("User");
@@ -318,6 +320,24 @@ const Navbar = () => {
         >
           {userEmail?.charAt(0).toUpperCase() || "U"}
         </div>
+        {/* NEW: Logout Button added for functionality */}
+        <button
+            onClick={handleLogout}
+            style={{
+                backgroundColor: "#ef4444",
+                color: "#fff",
+                padding: "8px 16px",
+                borderRadius: "8px",
+                fontWeight: 500,
+                cursor: "pointer",
+                border: "none",
+                transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#ef4444")}
+        >
+            Logout
+        </button>
       </div>
     </nav>
 
@@ -334,6 +354,8 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [showConfirmModal, setShowConfirm] = useState(false);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+  // 👇 ADDED: State for success message
+  const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -352,12 +374,9 @@ export default function Dashboard() {
   });
 
 
-  // Inside export default function Dashboard() { ... }
-
   const [showPendingPopup, setShowPendingPopup] = useState(false);
   const [pendingMessage, setPendingMessage] = useState("");
 
-  
 
   const [dollarsSum, setDollarsSum] = useState([0, 0]); // [Entrees, Sorties]
   const [fcSum, setFcSum] = useState([0, 0]); // [Entrees, Sorties]
@@ -491,10 +510,11 @@ export default function Dashboard() {
 
       console.log("Transaction added:", response.data);
 
-      // 🏆 NEW LOGIC: Check if it's a 'Sorties' transaction or if the backend returned 202
+      // 🏆 NEW LOGIC: Check if it's a 'Sorties' transaction or if the backend returned 202 (Accepted for processing)
       if (
-        newTransaction.channel === "Sorties" || 
-        response.status === 202
+        newTransaction.channel === "Sorties" ||
+        response.status === 202 ||
+        response.data.status === "Pending" // Assuming backend returns a status field
       ) {
         // Display the French pending popup
         setPendingMessage(
@@ -503,8 +523,8 @@ export default function Dashboard() {
         setShowPendingPopup(true);
       } else {
         // Standard success for Entrées or instantly approved items
-        // Show success banner (assuming your success banner uses the successMessage state)
-        setSuccessMessage("Transaction ajoutée avec succès !"); // Optional: French success message
+        // Show success banner
+        setSuccessMessage("Transaction ajoutée avec succès !");
         setShowSuccessBanner(true);
         setTimeout(() => {
           setShowSuccessBanner(false);
@@ -586,7 +606,28 @@ export default function Dashboard() {
       {errorMessage && (
         <MessageBox message={errorMessage} onClose={() => setErrorMessage(null)} />
       )}
-      {showSuccessBanner && <SuccessToast message={successMessage} />}
+      {/* SUCCESS MESSAGE STATE USED HERE */}
+      {showSuccessBanner && <SuccessToast message={successMessage} />} 
+      {/* PENDING POPUP */}
+      {showPendingPopup && (
+        <PendingPopup
+          message={pendingMessage}
+          onClose={() => {
+            setShowPendingPopup(false);
+            // Re-fetch transactions after closing pending popup to show the new pending entry
+            if (currentUserId && authToken) {
+                fetchTransactions(currentUserId, authToken);
+            }
+          }}
+        />
+      )}
+      {/* CONFIRMATION MODAL */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        message={confirmationMessage}
+        onConfirm={handleConfirmSubmit}
+        onCancel={() => setShowConfirm(false)}
+      />
 
       {loading ? (
         <div style={{ padding: '40px', textAlign: 'center', fontSize: '1.2rem', color: '#6b7280' }}>
@@ -646,40 +687,30 @@ export default function Dashboard() {
               }}
             >
               <Card
-                style={{
-                  minWidth: "300px", // ✅ Increased width
-                  flex: "0 0 auto",
-                  fontFamily: "'JetBrains Mono', monospace",
-                }}
-                title="ENTRÉES"
-                balance={entreesBalance}
-                fcBalance={entreesFCDisplay}
+                title="ENTRÉES ($)"
+                balance={entreesDollars.toFixed(2)} // Corrected: shows only amount in USD
+                fcBalance={entreesFCDisplay} // Shows FC equivalent
                 color="card-entrees"
               />
               <Card
-                style={{
-                  minWidth: "300px", // ✅ Increased width
-                  flex: "0 0 auto",
-                  fontFamily: "'JetBrains Mono', monospace",
-                }}
-                title="SORTIES"
-                balance={sortiesBalance}
-                fcBalance={sortiesFCDisplay}
+                title="SORTIES ($)"
+                balance={sortiesDollars.toFixed(2)} // Corrected: shows only amount in USD
+                fcBalance={sortiesFCDisplay} // Shows FC equivalent
                 color="card-sorties"
               />
             </div>
           </div>
 
           {/* 👇 NEW: Remaining Balance Display */}
-          <h2 style={{ fontSize: "1.5rem", fontWeight: 600, color: "#111827" }}>
-            Ecarts
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 600, color: "#111827", marginTop: "20px" }}>
+            Ecarts (Remaining Balance)
           </h2>
           <div
             className="remaining-balance-div"
             style={{
               marginTop: "20px",
               padding: "20px",
-              backgroundColor: "#22c55e", // Green background for remaining balance
+              backgroundColor: remainingDollars < 0 || remainingFC < 0 ? "#ef4444" : "#22c55e", // Red if negative, Green otherwise
               color: "#fff",
               borderRadius: "16px",
               boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
@@ -689,14 +720,14 @@ export default function Dashboard() {
 
             <div style={{ display: "flex", justifyContent: "space-around", gap: "20px" }}>
               <div style={{ flex: 1, borderRight: "1px solid rgba(255, 255, 255, 0.5)", paddingRight: "10px" }}>
-                <p style={{ fontSize: "1.1rem", fontWeight: 500, opacity: 0.9 }}>$</p>
-                <p style={{ fontSize: "1rem", fontWeight: 600 }}>
+                <p style={{ fontSize: "1.1rem", fontWeight: 500, opacity: 0.9 }}>USD ($)</p>
+                <p style={{ fontSize: "1.8rem", fontWeight: 700 }}>
                   {remainingDollars}
                 </p>
               </div>
               <div style={{ flex: 1, paddingLeft: "10px" }}>
                 <p style={{ fontSize: "1.1rem", fontWeight: 500, opacity: 0.9 }}>FC</p>
-                <p style={{ fontSize: "1rem", fontWeight: 600 }}>
+                <p style={{ fontSize: "1.8rem", fontWeight: 700 }}>
                   {remainingFC}
                 </p>
               </div>
@@ -705,7 +736,7 @@ export default function Dashboard() {
           {/* 👆 END: Remaining Balance Display */}
 
           {/* Overview Charts Header */}
-          <div className="transactions-header" style={{ marginTop: "10px" }}>
+          <div className="transactions-header" style={{ marginTop: "30px" }}>
             <h2 style={{ fontSize: "1.5rem", fontWeight: 600, color: "#111827" }}>
               Overview
             </h2>
@@ -810,7 +841,7 @@ export default function Dashboard() {
               }}
             >
               <h2 style={{ fontSize: "1.6rem", fontWeight: 600, color: "#111827" }}>
-                Transaction Table
+                Approved Transaction Table
               </h2>
 
             </div>
@@ -870,8 +901,8 @@ export default function Dashboard() {
                     .filter(tx => tx.status === "Approved") // Only show approved
                     .map((tx, i) => {
                       const paddingStyle = { padding: "10px 15px" };
-                      const usdAmount = tx.currency === "$" ? (Number(tx.amount) || 0).toFixed(2) : "0.00";
-                      const fcAmount = tx.currency === "FC" ? (Number(tx.amount) || 0).toFixed(2) : "0.00";
+                      const usdAmount = tx.currency === "$" ? (Number(tx.amount) || 0).toFixed(2) : "-"; // Use - for clarity
+                      const fcAmount = tx.currency === "FC" ? (Number(tx.amount) || 0).toFixed(2) : "-"; // Use - for clarity
                       const channelColor = tx.channel === "Entrées" ? "#16a34a" : "#dc2626";
 
                       return (
@@ -904,6 +935,13 @@ export default function Dashboard() {
                         </tr>
                       );
                     })}
+                    {tableData.filter(tx => tx.status === "Approved").length === 0 && (
+                        <tr>
+                            <td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+                                No approved transactions found.
+                            </td>
+                        </tr>
+                    )}
                 </tbody>
 
               </table>
@@ -1005,26 +1043,29 @@ export default function Dashboard() {
                 onChange={handleChange}
                 style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db' }}
               />
-              <input type="file" name="file" onChange={handleChange} style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db' }} />
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: "10px",
-                  marginTop: "10px",
-                }}
-              >
+              {/* FILE INPUT REMAINDER */}
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#374151' }}>
+                Upload Receipt/File (Optional)
+              </label>
+              <input
+                type="file"
+                name="file"
+                onChange={handleChange}
+                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db' }}
+              />
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
                   style={{
-                    padding: "10px 20px",
+                    flex: 1,
+                    padding: "12px 20px",
                     border: "1px solid #d1d5db",
                     borderRadius: "8px",
                     backgroundColor: "#fff",
                     cursor: "pointer",
                     transition: "all 0.2s",
+                    fontWeight: 500,
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#fff")}
@@ -1034,40 +1075,25 @@ export default function Dashboard() {
                 <button
                   type="submit"
                   style={{
-                    padding: "10px 20px",
+                    flex: 1,
+                    padding: "12px 20px",
                     backgroundColor: "#4f46e5",
                     color: "#fff",
                     border: "none",
                     borderRadius: "8px",
-                    fontWeight: 500,
+                    fontWeight: 600,
                     cursor: "pointer",
                     transition: "all 0.2s",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#4338ca")
-                  }
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#4338ca")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#4f46e5")}
                 >
-                  Add
+                  Submit Transaction
                 </button>
               </div>
             </form>
           </div>
         </div>
-      )}
-
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showConfirmModal}
-        message={confirmationMessage}
-        onConfirm={handleConfirmSubmit}
-        onCancel={() => setShowConfirm(false)}
-      />
-
-      {/* 🚀 NEW: Pending Approval Popup */}
-      {showPendingPopup && (
-        <PendingPopup
-          message={pendingMessage}
-          onClose={() => setShowPendingPopup(false)}
-        />
       )}
     </div>
   );

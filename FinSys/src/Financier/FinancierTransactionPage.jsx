@@ -62,7 +62,8 @@ const FinancierTransactionsPage = () => {
   // NEW: Function to fetch users
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get("https://finsys.onrender.com/api/users", {
+      // ✅ FIXED: Change to /api/users/all to match your UsersController route
+      const { data } = await axios.get("https://finsys.onrender.com/api/users/all", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(data);

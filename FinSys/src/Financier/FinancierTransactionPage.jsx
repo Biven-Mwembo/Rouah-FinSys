@@ -56,38 +56,36 @@ const FinancierTransactionsPage = () => {
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
-  // NEW: Add state for users
+  // NEW: Add state for users and loading flag
   const [users, setUsers] = useState([]);
+  const [usersLoaded, setUsersLoaded] = useState(false);
 
   // NEW: Function to fetch users
   const fetchUsers = async () => {
     try {
-      // ✅ FIXED: Change to /api/users/all to match your UsersController route
       const { data } = await axios.get("https://finsys.onrender.com/api/users/all", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(data);
+      setUsersLoaded(true);  // ✅ Mark as loaded
     } catch (err) {
       console.error("Erreur lors de la récupération des utilisateurs:", err);
-      // Fallback: users remain empty, so IDs will show as fallback
+      setUsersLoaded(true);  // Still mark as loaded to avoid infinite loading
     }
   };
 
-  // Récupérer les transactions
+  // Récupérer les transactions (removed calculatePerformance call here)
   const fetchTransactions = async () => {
     try {
-      // NOTE: Using a mock endpoint if the real one fails or is unavailable
       const apiEndpoint = "https://finsys.onrender.com/api/transactions/all";
       const { data } = await axios.get(apiEndpoint, { 
           headers: { Authorization: `Bearer ${token}` } 
       });
-      const sortedTx = data.sort((a, b) => new Date(b.date) - new Date(a.date)); // Dernières en premier
+      const sortedTx = data.sort((a, b) => new Date(b.date) - new Date(a.date));
       setTransactions(sortedTx);
-      calculatePerformance(sortedTx);
       setLoading(false);
     } catch (err) {
       console.error("Erreur lors de la récupération des transactions:", err);
-      // Fallback to mock data structure if API fails
       setTransactions([]);
       setLoading(false);
     }
@@ -95,7 +93,7 @@ const FinancierTransactionsPage = () => {
 
   // Calculer les métriques de performance et les sommes
   const calculatePerformance = (txData) => {
-    if (!txData || txData.length === 0) return;
+    if (!txData || txData.length === 0 || !usersLoaded) return;  // ✅ Wait for users to load
 
     // Filter for approved transactions (case-insensitive)
     const approvedTx = txData.filter((tx) => tx.status?.toLowerCase() === "approved");
@@ -134,7 +132,7 @@ const FinancierTransactionsPage = () => {
       .map(([userId, count]) => {
         return {
           id: userId,
-          name: getUserFullName(userId), // UPDATED: Use full name instead of ID
+          name: getUserFullName(userId),  // ✅ Now uses loaded users
           txCount: count,
         };
       })
@@ -156,7 +154,7 @@ const FinancierTransactionsPage = () => {
       head: [["ID", "Utilisateur", "Date", "Montant", "Devise", "Canal", "Motif", "Statut"]],
       body: transactions.map(tx => [
         tx.id,
-        getUserFullName(tx.user_id), // UPDATED: Use full name
+        getUserFullName(tx.user_id),
         formatDate(tx.date),
         tx.amount,
         tx.currency,
@@ -168,15 +166,12 @@ const FinancierTransactionsPage = () => {
     doc.save("transactions.pdf");
   };
 
-  // NEW: Helper function to get the full user name
+  // NEW: Helper function to get the full user name (with logging for debugging)
   const getUserFullName = (userId) => {
     const user = users.find(u => u.id === userId);
-    return user ? `${user.name} ${user.surname}` : userId || "N/A";
-  };
-
-  // UPDATED: Obtenir le nom de l'utilisateur (now uses the helper)
-  const getUserName = (tx) => {
-    return getUserFullName(tx.user_id);
+    const fullName = user ? `${user.name} ${user.surname}`.trim() : userId || "N/A";
+    console.log(`getUserFullName(${userId}): ${fullName}`);  // ✅ Debug log (remove later)
+    return fullName;
   };
 
   // UPDATED: useEffect to fetch both transactions and users
@@ -185,46 +180,50 @@ const FinancierTransactionsPage = () => {
     fetchUsers();
   }, []);
 
+  // ✅ NEW: Separate useEffect to calculate performance only after both are loaded
+  useEffect(() => {
+    if (transactions.length > 0 && usersLoaded) {
+      calculatePerformance(transactions);
+    }
+  }, [transactions, usersLoaded]);
+
   if (loading) return <p className="loading-message">Chargement des données...</p>;
 
   return (
     <>
-       
       <div className="financier-container">
         <h1 className="page-title">Transactions Financier</h1>
 
         {/* Cartes des totaux */}
-       {/* Summary cards (Entrées & Sorties) */}
-<div className="summary-cards-grid">
-  <div className="summary-group">
-    <h2>Entrées</h2>
-    <div className="summary-values">
-      <div className="summary-value">
-        <span>USD</span>
-        <span>{dollarsSum[0].toFixed(2)}</span>
-      </div>
-      <div className="summary-value">
-        <span>FC</span>
-        <span>{fcSum[0].toFixed(2)}</span>
-      </div>
-    </div>
-  </div>
+        <div className="summary-cards-grid">
+          <div className="summary-group">
+            <h2>Entrées</h2>
+            <div className="summary-values">
+              <div className="summary-value">
+                <span>USD</span>
+                <span>{dollarsSum[0].toFixed(2)}</span>
+              </div>
+              <div className="summary-value">
+                <span>FC</span>
+                <span>{fcSum[0].toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
 
-  <div className="summary-group">
-    <h2>Sorties</h2>
-    <div className="summary-values">
-      <div className="summary-value">
-        <span>USD</span>
-        <span>{dollarsSum[1].toFixed(2)}</span>
-      </div>
-      <div className="summary-value">
-        <span>FC</span>
-        <span>{fcSum[1].toFixed(2)}</span>
-      </div>
-    </div>
-  </div>
-</div>
-
+          <div className="summary-group">
+            <h2>Sorties</h2>
+            <div className="summary-values">
+              <div className="summary-value">
+                <span>USD</span>
+                <span>{dollarsSum[1].toFixed(2)}</span>
+              </div>
+              <div className="summary-value">
+                <span>FC</span>
+                <span>{fcSum[1].toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Métriques de Performance */}
         {performanceData && (
@@ -240,7 +239,7 @@ const FinancierTransactionsPage = () => {
                       <li key={user.id} className="top-user-item">
                         <span className="rank-badge">{index + 1}</span>
                         <div className="user-info">
-                          <strong>{user.name}</strong> {/* ✅ ALREADY SHOWS FULL NAME (e.g., "John Doe") */}
+                          <strong>{user.name}</strong> {/* ✅ Now shows full name */}
                           <span>{user.txCount} transactions</span>
                         </div>
                       </li>
@@ -257,7 +256,7 @@ const FinancierTransactionsPage = () => {
                     <li key={user.id}>
                       <span className="rank-number">{index + 1}.</span>
                       <div className="user-info">
-                        <strong>{user.name}</strong> {/* ✅ ALREADY SHOWS FULL NAME (e.g., "John Doe") */}
+                        <strong>{user.name}</strong> {/* ✅ Now shows full name */}
                         <span>{user.txCount} transactions</span>
                       </div>
                     </li>

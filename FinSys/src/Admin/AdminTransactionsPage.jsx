@@ -22,13 +22,14 @@ const formatDate = (dateString) => {
 export default function AdminTransactionsPage() {
     const [transactions, setTransactions] = useState([]);
     const [users, setUsers] = useState([]);
+    const [usersLoaded, setUsersLoaded] = useState(false);  // ✅ NEW: Track users loading
     const [banner, setBanner] = useState({ message: "", type: "" });
     const [editingTx, setEditingTx] = useState(null); // Controls Edit Modal
     const [confirmDeleteTxId, setConfirmDeleteTxId] = useState(null); // Controls Delete Modal
 
     const token = localStorage.getItem("token");
 
-    // ✅ FETCH ALL TRANSACTIONS
+    // ✅ FETCH ALL TRANSACTIONS (updated to map userName after users load)
     const fetchAllTransactions = () => {
         if (!token) {
             setBanner({ message: "Authentication token missing.", type: "error" });
@@ -47,19 +48,11 @@ export default function AdminTransactionsPage() {
                 return res.json();
             })
             .then((data) => {
-                const mappedData = data.map(tx => {
-                    const userObj = tx.user || tx.userDetails || tx.users; 
-                    
-                    // Re-calculate fullName for display
-                    const fullName = userObj 
-                        ? `${userObj.name || ''} ${userObj.surname || ''}`.trim() 
-                        : tx.user_id || "Unknown User"; 
-                        
-                    return {
-                        ...tx,
-                        userName: fullName, // Ensure this field contains the full name
-                    };
-                });
+                // ✅ UPDATED: Map userName using getUserFullName (will resolve to full name if users are loaded)
+                const mappedData = data.map(tx => ({
+                    ...tx,
+                    userName: getUserFullName(tx.user_id),  // ✅ Use helper to get full name
+                }));
                 setTransactions(mappedData);
             })
             .catch((error) =>
@@ -67,7 +60,7 @@ export default function AdminTransactionsPage() {
             );
     };
 
-    // ✅ FETCH ALL USERS
+    // ✅ FETCH ALL USERS (unchanged, but now sets usersLoaded)
     const fetchAllUsers = () => {
         if (!token) {
             setBanner({ message: "Authentication token missing.", type: "error" });
@@ -85,23 +78,45 @@ export default function AdminTransactionsPage() {
                 }
                 return res.json();
             })
-            .then((data) => setUsers(data))
+            .then((data) => {
+                setUsers(data);
+                setUsersLoaded(true);  // ✅ Mark as loaded
+            })
             .catch((error) =>
                 setBanner({ message: `Failed to fetch users: ${error.message}`, type: "error" })
             );
     };
 
+    // ✅ NEW: Helper function to get full user name
+    const getUserFullName = (userId) => {
+        const user = users.find(u => u.id === userId);
+        const fullName = user ? `${user.name || ''} ${user.surname || ''}`.trim() : userId || "N/A";
+        console.log(`getUserFullName(${userId}): ${fullName}`);  // ✅ Debug log (remove later)
+        return fullName;
+    };
+
+    // ✅ UPDATED: useEffect to fetch both
     useEffect(() => {
         fetchAllTransactions();
         fetchAllUsers();
     }, []);
 
+    // ✅ NEW: Separate useEffect to re-map transactions when users load
+    useEffect(() => {
+        if (usersLoaded && transactions.length > 0) {
+            setTransactions(prev => prev.map(tx => ({
+                ...tx,
+                userName: getUserFullName(tx.user_id),  // ✅ Re-map with full names
+            })));
+        }
+    }, [usersLoaded, users]);  // Re-run when users are loaded or updated
+
     // --- EDIT HANDLERS ---
-   const handleEdit = (transaction) => {
-    console.log("Editing transaction ID:", transaction.id);  // Should log "TR068"
-    const dateValue = transaction.date ? new Date(transaction.date).toISOString().split('T')[0] : '';
-    setEditingTx({ ...transaction, date: dateValue });
-};
+    const handleEdit = (transaction) => {
+        console.log("Editing transaction ID:", transaction.id);  // Should log "TR068"
+        const dateValue = transaction.date ? new Date(transaction.date).toISOString().split('T')[0] : '';
+        setEditingTx({ ...transaction, date: dateValue });
+    };
     const handleCancelEdit = () => setEditingTx(null);
 
     const handleEditChange = (e) => {
@@ -301,7 +316,6 @@ export default function AdminTransactionsPage() {
                 </div>
             )}
 
-
             {/* Existing Transactions Table */}
             <div className="card">
                 <div className="table-header">
@@ -326,7 +340,7 @@ export default function AdminTransactionsPage() {
                             {transactions.length > 0 ? (
                                 transactions.map((tx) => (
                                     <tr key={tx.id}>
-                                        <td><strong>{tx.userName}</strong></td> 
+                                        <td><strong>{tx.userName}</strong></td>  {/* ✅ Now shows full name */}
                                         <td>{formatDate(tx.date)}</td>
                                         <td>{tx.amount}</td>
                                         <td>{tx.currency}</td>

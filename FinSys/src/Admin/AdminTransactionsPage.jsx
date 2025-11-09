@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import "./Transactions.css";
 import axios from "axios";
-import jsPDF from "jspdf";  // ✅ Ensure installed: npm install jspdf
-import autoTable from "jspdf-autotable";  // ✅ Ensure installed: npm install jspdf-autotable
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const API_BASE_URL = "https://finsys.onrender.com/api";
 
@@ -134,7 +134,13 @@ export default function AdminTransactionsPage() {
         URL.revokeObjectURL(url);
     };
 
+    // ✅ UPDATED: Check if users are loaded before downloading
     const handleDownload = () => {
+        if (!usersLoaded) {
+            setBanner({ message: "⏳ Please wait for data to load before downloading.", type: "error" });
+            setTimeout(() => setBanner({ message: "", type: "" }), 4000);
+            return;
+        }
         const format = window.confirm("Click OK for PDF, Cancel for CSV");
         if (format) {
             downloadPDF();
@@ -362,7 +368,6 @@ export default function AdminTransactionsPage() {
             <div className="card">
                 <div className="table-header">
                     <h2>All Transactions</h2>
-                    {/* ✅ NEW: Télécharger Button */}
                     <button className="action-btn download-btn" onClick={handleDownload}>
                         Télécharger
                     </button>

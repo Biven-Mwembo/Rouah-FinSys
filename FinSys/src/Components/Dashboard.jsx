@@ -82,7 +82,7 @@ const ConfirmationModal = ({ isOpen, message, onConfirm, onCancel }) => {
         }}
       >
         <h3 style={{ fontSize: "1.2rem", color: "#111827", marginBottom: "15px" }}>
-          Confirm Transaction
+          Confirmer la Transaction
         </h3>
         <p style={{ marginBottom: "25px", color: "#4b5563" }}>
           {message}
@@ -119,7 +119,7 @@ const ConfirmationModal = ({ isOpen, message, onConfirm, onCancel }) => {
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#059669")}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#10b981")}
           >
-            Confirm Add
+            Confirmer L'Ajout
           </button>
         </div>
       </div>
@@ -193,7 +193,7 @@ const PendingPopup = ({ message, onClose }) => {
         }}
       >
         <h3 style={{ color: "#111827", fontWeight: "600", marginBottom: "10px" }}>
-          Transaction Pending
+          Transaction En Attente
         </h3>
         {/* The message will be in French as per the requirement */}
         <p style={{ color: "#4b5563", marginBottom: "25px" }}>{message}</p>
@@ -336,7 +336,7 @@ const Navbar = () => {
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#ef4444")}
         >
-            Logout
+            Fermer
         </button>
       </div>
     </nav>

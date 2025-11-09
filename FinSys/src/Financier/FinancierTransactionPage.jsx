@@ -174,6 +174,11 @@ const FinancierTransactionsPage = () => {
     return fullName;
   };
 
+  // ✅ FIXED: Add the missing getUserName function
+  const getUserName = (tx) => {
+    return getUserFullName(tx.user_id);
+  };
+
   // UPDATED: useEffect to fetch both transactions and users
   useEffect(() => {
     fetchTransactions();
@@ -293,7 +298,7 @@ const FinancierTransactionsPage = () => {
               {transactions.map((tx) => (
                 <tr key={tx.id}>
                   <td data-label="ID">{tx.id}</td>
-                  <td data-label="Utilisateur">{getUserName(tx)}</td>
+                  <td data-label="Utilisateur">{getUserName(tx)}</td>  {/* ✅ Now defined */}
                   <td data-label="Date">{formatDate(tx.date)}</td>
                   <td
                     data-label="Montant"

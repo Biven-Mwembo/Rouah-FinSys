@@ -240,7 +240,7 @@ const FinancierTransactionsPage = () => {
                       <li key={user.id} className="top-user-item">
                         <span className="rank-badge">{index + 1}</span>
                         <div className="user-info">
-                          <strong>{user.name}</strong>
+                          <strong>{user.name}</strong> {/* ✅ ALREADY SHOWS FULL NAME (e.g., "John Doe") */}
                           <span>{user.txCount} transactions</span>
                         </div>
                       </li>
@@ -257,7 +257,7 @@ const FinancierTransactionsPage = () => {
                     <li key={user.id}>
                       <span className="rank-number">{index + 1}.</span>
                       <div className="user-info">
-                        <strong>{user.name}</strong>
+                        <strong>{user.name}</strong> {/* ✅ ALREADY SHOWS FULL NAME (e.g., "John Doe") */}
                         <span>{user.txCount} transactions</span>
                       </div>
                     </li>

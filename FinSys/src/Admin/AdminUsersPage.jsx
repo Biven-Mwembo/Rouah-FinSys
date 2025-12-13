@@ -22,8 +22,8 @@ const AdminUsersPage = () => {
     const [transactions, setTransactions] = useState([]);
     const [performanceData, setPerformanceData] = useState(null);
     const [banner, setBanner] = useState({ message: "", type: "" });
-    const [editingUser, setEditingUser] = useState(null); // For edit modal
-    const [confirmDeleteId, setConfirmDeleteId] = useState(null); // For delete modal
+    const [editingUser, setEditingUser] = useState(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
     const token = localStorage.getItem("token");
 
@@ -97,18 +97,14 @@ const AdminUsersPage = () => {
         Object.entries(userTxCounts).forEach(([userId, count]) => {
             if (count > maxCount) {
                 maxCount = count;
-                // Optional: Add logging here for debugging (remove after testing)
-                console.log("User ID from transaction:", userId);
-                console.log("Users array:", users);
                 const user = users.find(u => u.id === userId);
-                console.log("Found user:", user);
                 topUser = user ? { ...user, txCount: count } : { id: userId, name: "Unknown", surname: "", txCount: count };
             }
         });
 
         // Aggregate amounts by channel and currency
         const aggregates = { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } };
-        const userContributions = {}; // { userId: { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } } }
+        const userContributions = {};
 
         txData.forEach(tx => {
             const userId = tx.user_id || tx.user?.id;
@@ -137,7 +133,6 @@ const AdminUsersPage = () => {
             }
         });
 
-        // Top user's contributions
         const topUserContributions = topUser ? userContributions[topUser.id] || { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } } : null;
 
         setPerformanceData({
@@ -153,12 +148,17 @@ const AdminUsersPage = () => {
         fetchPerformanceData();
     }, []);
 
-    // New useEffect to recalculate when users or transactions change (this is the key fix)
     useEffect(() => {
         if (transactions.length > 0 && users.length > 0) {
             calculatePerformance(transactions);
         }
     }, [users, transactions]);
+
+    // Montant Disponible = Entrées - Sorties
+    const montantDisponible = {
+        USD: (performanceData?.aggregates?.entrees?.usd || 0) - (performanceData?.aggregates?.sorties?.usd || 0),
+        FC: (performanceData?.aggregates?.entrees?.fc || 0) - (performanceData?.aggregates?.sorties?.fc || 0),
+    };
 
     // Handle edit
     const handleEdit = (user) => {
@@ -170,10 +170,7 @@ const AdminUsersPage = () => {
 
     const handleEditChange = (e) => {
         const { name, value } = e.target;
-        setEditingUser((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+        setEditingUser((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleUpdate = async (e) => {
@@ -191,16 +188,9 @@ const AdminUsersPage = () => {
         };
 
         try {
-            const res = await axios.patch(
-                `${API_BASE_URL}/users/${id}`,
-                updateData,
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            const res = await axios.patch(`${API_BASE_URL}/users/${id}`, updateData, {
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            });
 
             if (res.status === 204) {
                 setBanner({ message: "✅ User updated successfully!", type: "success" });
@@ -208,10 +198,7 @@ const AdminUsersPage = () => {
                 fetchAllUsers();
             }
         } catch (error) {
-            const errorMessage = error.response?.data?.message ||
-                error.response?.data ||
-                error.message ||
-                "Failed to update user.";
+            const errorMessage = error.response?.data?.message || error.response?.data || error.message || "Failed to update user.";
             setBanner({ message: `❌ Error updating: ${errorMessage}`, type: "error" });
         } finally {
             setTimeout(() => setBanner({ message: "", type: "" }), 4000);
@@ -225,21 +212,16 @@ const AdminUsersPage = () => {
     const handleDelete = async (id) => {
         setConfirmDeleteId(null);
         try {
-            const res = await axios.delete(
-                `${API_BASE_URL}/users/${id}`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
+            const res = await axios.delete(`${API_BASE_URL}/users/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
             if (res.status === 204) {
                 setBanner({ message: "🗑️ User deleted successfully!", type: "success" });
                 setUsers(prev => prev.filter(user => user.id !== id));
             }
         } catch (error) {
-            const errorMessage = error.response?.data?.message ||
-                error.message ||
-                "Failed to delete user.";
+            const errorMessage = error.response?.data?.message || error.message || "Failed to delete user.";
             setBanner({ message: `❌ Error deleting: ${errorMessage}`, type: "error" });
         } finally {
             setTimeout(() => setBanner({ message: "", type: "" }), 4000);
@@ -248,20 +230,14 @@ const AdminUsersPage = () => {
 
     return (
         <div className="transactions-container">
-            {banner.message && (
-                <div className={`toast-notification ${banner.type}`}>
-                    {banner.message}
-                </div>
-            )}
+            {banner.message && <div className={`toast-notification ${banner.type}`}>{banner.message}</div>}
 
             <h1>Admin User Management</h1>
 
-            {/* Performance Container */}
+            {/* Performance Card */}
             {performanceData && (
                 <div className="card" style={{ marginBottom: "2rem" }}>
-                    <div className="table-header">
-                        <h2>Performance Metrics</h2>
-                    </div>
+                    <div className="table-header"><h2>Performance Metrics</h2></div>
                     <div style={{ padding: "1rem" }}>
                         {/* Top Contributor */}
                         <div style={{ marginBottom: "1rem" }}>
@@ -269,11 +245,18 @@ const AdminUsersPage = () => {
                             {performanceData.topUser ? (
                                 <p>
                                     <strong>{performanceData.topUser.name} {performanceData.topUser.surname}</strong> added the most transactions: 
-                                    {performanceData.topUser.txCount} out of {performanceData.totalTx} total.
+                                    {performanceData.topUser.txCount} out of {performanceData.totalTx}.
                                 </p>
                             ) : (
                                 <p>No transactions found.</p>
                             )}
+                        </div>
+
+                        {/* Montant Disponible Card */}
+                        <div className="card montant-disponible-card" style={{ marginBottom: "1rem", backgroundColor: "#e6f7ff", padding: "1rem", borderRadius: "8px", textAlign: "center" }}>
+                            <h3>Montant Disponible</h3>
+                            <p>USD: <strong>${montantDisponible.USD.toFixed(2)}</strong></p>
+                            <p>FC: <strong>{montantDisponible.FC.toFixed(2)} FC</strong></p>
                         </div>
 
                         {/* Entrées */}
@@ -286,25 +269,17 @@ const AdminUsersPage = () => {
                                     <div>
                                         <label>$: {performanceData.topUserContributions.entrees.usd.toFixed(2)} / ${performanceData.aggregates.entrees.usd.toFixed(2)}</label>
                                         <div className="progress-bar">
-                                            <div 
-                                                className="progress-fill" 
-                                                style={{ width: `${performanceData.aggregates.entrees.usd > 0 ? (performanceData.topUserContributions.entrees.usd / performanceData.aggregates.entrees.usd) * 100 : 0}%` }}
-                                            ></div>
+                                            <div className="progress-fill" style={{ width: `${performanceData.aggregates.entrees.usd > 0 ? (performanceData.topUserContributions.entrees.usd / performanceData.aggregates.entrees.usd) * 100 : 0}%` }}></div>
                                         </div>
                                     </div>
                                     <div>
                                         <label>FC: {performanceData.topUserContributions.entrees.fc.toFixed(2)} / {performanceData.aggregates.entrees.fc.toFixed(2)} FC</label>
                                         <div className="progress-bar">
-                                            <div 
-                                                className="progress-fill" 
-                                                style={{ width: `${performanceData.aggregates.entrees.fc > 0 ? (performanceData.topUserContributions.entrees.fc / performanceData.aggregates.entrees.fc) * 100 : 0}%` }}
-                                            ></div>
+                                            <div className="progress-fill" style={{ width: `${performanceData.aggregates.entrees.fc > 0 ? (performanceData.topUserContributions.entrees.fc / performanceData.aggregates.entrees.fc) * 100 : 0}%` }}></div>
                                         </div>
                                     </div>
                                 </>
-                            ) : (
-                                <p>No contributions.</p>
-                            )}
+                            ) : <p>No contributions.</p>}
                         </div>
 
                         {/* Sorties */}
@@ -317,25 +292,17 @@ const AdminUsersPage = () => {
                                     <div>
                                         <label>$: {performanceData.topUserContributions.sorties.usd.toFixed(2)} / ${performanceData.aggregates.sorties.usd.toFixed(2)}</label>
                                         <div className="progress-bar">
-                                            <div 
-                                                className="progress-fill" 
-                                                style={{ width: `${performanceData.aggregates.sorties.usd > 0 ? (performanceData.topUserContributions.sorties.usd / performanceData.aggregates.sorties.usd) * 100 : 0}%` }}
-                                            ></div>
+                                            <div className="progress-fill" style={{ width: `${performanceData.aggregates.sorties.usd > 0 ? (performanceData.topUserContributions.sorties.usd / performanceData.aggregates.sorties.usd) * 100 : 0}%` }}></div>
                                         </div>
                                     </div>
                                     <div>
                                         <label>FC: {performanceData.topUserContributions.sorties.fc.toFixed(2)} / {performanceData.aggregates.sorties.fc.toFixed(2)} FC</label>
                                         <div className="progress-bar">
-                                            <div 
-                                                className="progress-fill" 
-                                                style={{ width: `${performanceData.aggregates.sorties.fc > 0 ? (performanceData.topUserContributions.sorties.fc / performanceData.aggregates.sorties.fc) * 100 : 0}%` }}
-                                            ></div>
+                                            <div className="progress-fill" style={{ width: `${performanceData.aggregates.sorties.fc > 0 ? (performanceData.topUserContributions.sorties.fc / performanceData.aggregates.sorties.fc) * 100 : 0}%` }}></div>
                                         </div>
                                     </div>
                                 </>
-                            ) : (
-                                <p>No contributions.</p>
-                            )}
+                            ) : <p>No contributions.</p>}
                         </div>
                     </div>
                 </div>
@@ -346,63 +313,13 @@ const AdminUsersPage = () => {
                 <div className="modal-overlay">
                     <form onSubmit={handleUpdate} className="edit-form modal-content">
                         <h3>Edit User #{editingUser.id}</h3>
-
-                        <label>
-                            Name:
-                            <input
-                                type="text"
-                                name="name"
-                                value={editingUser.name}
-                                onChange={handleEditChange}
-                                required
-                            />
-                        </label>
-                        <label>
-                            Surname:
-                            <input
-                                type="text"
-                                name="surname"
-                                value={editingUser.surname}
-                                onChange={handleEditChange}
-                                required
-                            />
-                        </label>
-                        <label>
-                            Email:
-                            <input
-                                type="email"
-                                name="email"
-                                value={editingUser.email}
-                                onChange={handleEditChange}
-                                required
-                            />
-                        </label>
-                        <label>
-                            Address:
-                            <input
-                                type="text"
-                                name="address"
-                                value={editingUser.address || ""}
-                                onChange={handleEditChange}
-                            />
-                        </label>
-                        <label>
-                            Date of Birth:
-                            <input
-                                type="date"
-                                name="dob"
-                                value={editingUser.dob}
-                                onChange={handleEditChange}
-                            />
-                        </label>
-                        <label>
-                            Role:
-                            <select
-                                name="role"
-                                value={editingUser.role}
-                                onChange={handleEditChange}
-                                required
-                            >
+                        <label>Name:<input type="text" name="name" value={editingUser.name} onChange={handleEditChange} required /></label>
+                        <label>Surname:<input type="text" name="surname" value={editingUser.surname} onChange={handleEditChange} required /></label>
+                        <label>Email:<input type="email" name="email" value={editingUser.email} onChange={handleEditChange} required /></label>
+                        <label>Address:<input type="text" name="address" value={editingUser.address || ""} onChange={handleEditChange} /></label>
+                        <label>Date of Birth:<input type="date" name="dob" value={editingUser.dob} onChange={handleEditChange} /></label>
+                        <label>Role:
+                            <select name="role" value={editingUser.role} onChange={handleEditChange} required>
                                 <option value="user">User</option>
                                 <option value="admin">Admin</option>
                                 <option value="financier">Financier</option>
@@ -424,25 +341,10 @@ const AdminUsersPage = () => {
                     <div className="confirm-modal modal-content">
                         <span className="warning-icon">⚠️</span>
                         <h3>Confirm Deletion</h3>
-                        <p>
-                            Are you sure you want to permanently delete user 
-                            <strong> #{confirmDeleteId}</strong>? 
-                            This action cannot be undone.
-                        </p>
+                        <p>Are you sure you want to permanently delete user <strong>#{confirmDeleteId}</strong>? This action cannot be undone.</p>
                         <div className="form-actions">
-                            <button 
-                                className="action-btn delete-confirm-btn" 
-                                onClick={() => handleDelete(confirmDeleteId)} 
-                            >
-                                Yes, Delete
-                            </button>
-                            <button 
-                                type="button" 
-                                className="action-btn cancel-btn" 
-                                onClick={cancelDelete} 
-                            >
-                                Cancel
-                            </button>
+                            <button className="action-btn delete-confirm-btn" onClick={() => handleDelete(confirmDeleteId)}>Yes, Delete</button>
+                            <button type="button" className="action-btn cancel-btn" onClick={cancelDelete}>Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -450,44 +352,30 @@ const AdminUsersPage = () => {
 
             {/* Users Table */}
             <div className="card">
-                <div className="table-header">
-                    <h2>All Registered Users</h2>
-                </div>
-
+                <div className="table-header"><h2>All Registered Users</h2></div>
                 <div className="table-responsive">
                     <table className="transactions-table admin-table">
                         <thead>
                             <tr>
-                                <th>User ID</th>
-                                <th>Name</th>
-                                <th>Surname</th>
-                                <th>Email</th>
-                                <th>Address</th>
-                                <th>Date of Birth</th>
-                                <th>Role</th>
-                                <th>Actions</th>
+                                <th>User ID</th><th>Name</th><th>Surname</th><th>Email</th><th>Address</th><th>Date of Birth</th><th>Role</th><th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {users.length > 0 ? (
-                                users.map((user) => (
-                                    <tr key={user.id}>
-                                        <td><strong>{user.id}</strong></td>
-                                        <td>{user.name}</td>
-                                        <td>{user.surname}</td>
-                                        <td>{user.email}</td>
-                                        <td>{user.address || "-"}</td>
-                                        <td>{user.dob ? formatDate(user.dob) : "-"}</td>
-                                        <td>{user.role}</td>
-                                        <td>
-                                            <button className="action-btn edit-btn" onClick={() => handleEdit(user)}>Edit</button>
-                                            <button className="action-btn delete-btn" onClick={() => confirmDelete(user.id)}>Delete</button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr><td colSpan="8" className="text-center">No users found.</td></tr>
-                            )}
+                            {users.length > 0 ? users.map(user => (
+                                <tr key={user.id}>
+                                    <td><strong>{user.id}</strong></td>
+                                    <td>{user.name}</td>
+                                    <td>{user.surname}</td>
+                                    <td>{user.email}</td>
+                                    <td>{user.address || "-"}</td>
+                                    <td>{user.dob ? formatDate(user.dob) : "-"}</td>
+                                    <td>{user.role}</td>
+                                    <td>
+                                        <button className="action-btn edit-btn" onClick={() => handleEdit(user)}>Edit</button>
+                                        <button className="action-btn delete-btn" onClick={() => confirmDelete(user.id)}>Delete</button>
+                                    </td>
+                                </tr>
+                            )) : <tr><td colSpan="8" className="text-center">No users found.</td></tr>}
                         </tbody>
                     </table>
                 </div>

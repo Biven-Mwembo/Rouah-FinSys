@@ -27,38 +27,11 @@ export default function AdminTransactionsPage() {
     const [banner, setBanner] = useState({ message: "", type: "" });
     const [editingTx, setEditingTx] = useState(null);
     const [confirmDeleteTxId, setConfirmDeleteTxId] = useState(null);
+    const [montantDisponible, setMontantDisponible] = useState({ USD: 0, FC: 0 });
 
     const token = localStorage.getItem("token");
 
-    const fetchAllTransactions = () => {
-        if (!token) {
-            setBanner({ message: "Authentication token missing.", type: "error" });
-            return;
-        }
-
-        fetch(`${API_BASE_URL}/transactions/all`, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then(async (res) => {
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    const status = res.status;
-                    throw new Error(`[Status ${status}] Access Denied or API error: ${errorText || res.statusText}`);
-                }
-                return res.json();
-            })
-            .then((data) => {
-                const mappedData = data.map(tx => ({
-                    ...tx,
-                    userName: getUserFullName(tx.user_id),
-                }));
-                setTransactions(mappedData);
-            })
-            .catch((error) =>
-                setBanner({ message: `Failed to fetch data: ${error.message}`, type: "error" })
-            );
-    };
-
+    // --- FETCH ALL USERS ---
     const fetchAllUsers = () => {
         if (!token) {
             setBanner({ message: "Authentication token missing.", type: "error" });
@@ -71,8 +44,7 @@ export default function AdminTransactionsPage() {
             .then(async (res) => {
                 if (!res.ok) {
                     const errorText = await res.text();
-                    const status = res.status;
-                    throw new Error(`[Status ${status}] Access Denied or API error: ${errorText || res.statusText}`);
+                    throw new Error(`[Status ${res.status}] ${errorText || res.statusText}`);
                 }
                 return res.json();
             })
@@ -85,18 +57,76 @@ export default function AdminTransactionsPage() {
             );
     };
 
+    // --- FETCH ALL TRANSACTIONS ---
+    const fetchAllTransactions = () => {
+        if (!token) {
+            setBanner({ message: "Authentication token missing.", type: "error" });
+            return;
+        }
+
+        fetch(`${API_BASE_URL}/transactions/all`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then(async (res) => {
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`[Status ${res.status}] ${errorText || res.statusText}`);
+                }
+                return res.json();
+            })
+            .then((data) => {
+                setTransactions(data);
+            })
+            .catch((error) =>
+                setBanner({ message: `Failed to fetch data: ${error.message}`, type: "error" })
+            );
+    };
+
+    // --- CALCULATE USER NAMES ---
     const getUserFullName = (userId) => {
         const user = users.find(u => u.id === userId);
         return user ? `${user.name || ''} ${user.surname || ''}`.trim() : userId || "N/A";
     };
 
+    // --- CALCULATE MONTANT DISPONIBLE ---
+    const calculateMontantDisponible = (txList = transactions) => {
+        const totals = { USD: 0, FC: 0 };
+        txList.forEach(tx => {
+            const amount = parseFloat(tx.amount) || 0;
+            if (tx.channel?.toLowerCase() === "entrées") {
+                if (tx.currency === "$") totals.USD += amount;
+                else if (tx.currency === "FC") totals.FC += amount;
+            } else if (tx.channel?.toLowerCase() === "sorties") {
+                if (tx.currency === "$") totals.USD -= amount;
+                else if (tx.currency === "FC") totals.FC -= amount;
+            }
+        });
+        setMontantDisponible(totals);
+    };
+
+    // --- DOWNLOAD FUNCTIONS ---
     const downloadPDF = () => {
         const doc = new jsPDF();
-        doc.text("All Transactions", 20, 10);
+
+        // Title
+        doc.setFontSize(16);
+        doc.text("All Transactions", doc.internal.pageSize.getWidth() / 2, 10, { align: "center" });
+
+        // Montant Disponible
+        doc.setFontSize(12);
+        doc.setFont(undefined, "bold");
+        doc.text(
+            `Montant Disponible: USD ${montantDisponible.USD.toFixed(2)}, FC ${montantDisponible.FC.toFixed(2)}`,
+            doc.internal.pageSize.getWidth() / 2,
+            20,
+            { align: "center" }
+        );
+
         autoTable(doc, {
+            startY: 30,
             head: [["User", "Date", "Amount", "Currency", "Channel", "Motif", "Status"]],
             body: transactions.map(tx => [
-                tx.userName,
+                getUserFullName(tx.user_id),
                 formatDate(tx.date),
                 tx.amount,
                 tx.currency,
@@ -105,21 +135,28 @@ export default function AdminTransactionsPage() {
                 tx.status,
             ]),
         });
+
         doc.save("all_transactions.pdf");
     };
 
     const downloadCSV = () => {
-        const csvHeaders = ["User", "Date", "Amount", "Currency", "Channel", "Motif", "Status"];
-        const csvRows = transactions.map(tx => [
-            tx.userName,
-            formatDate(tx.date),
-            tx.amount,
-            tx.currency,
-            tx.channel,
-            tx.motif,
-            tx.status,
-        ]);
-        const csvContent = [csvHeaders, ...csvRows].map(row => row.join(",")).join("\n");
+        const csvLines = [];
+        csvLines.push([`Montant Disponible: USD ${montantDisponible.USD.toFixed(2)}, FC ${montantDisponible.FC.toFixed(2)}`]);
+        csvLines.push([]);
+        csvLines.push(["User", "Date", "Amount", "Currency", "Channel", "Motif", "Status"]);
+        transactions.forEach(tx => {
+            csvLines.push([
+                getUserFullName(tx.user_id),
+                formatDate(tx.date),
+                tx.amount,
+                tx.currency,
+                tx.channel,
+                tx.motif,
+                tx.status
+            ]);
+        });
+
+        const csvContent = csvLines.map(row => row.join(",")).join("\n");
         const blob = new Blob([csvContent], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -130,71 +167,97 @@ export default function AdminTransactionsPage() {
     };
 
     const handleDownload = () => {
-        if (!usersLoaded) {
-            setBanner({ message: "⏳ Please wait for data to load before downloading.", type: "error" });
-            setTimeout(() => setBanner({ message: "", type: "" }), 4000);
-            return;
-        }
+        calculateMontantDisponible();
         const format = window.confirm("Click OK for PDF, Cancel for CSV");
-        if (format) {
-            downloadPDF();
-        } else {
-            downloadCSV();
+        if (format) downloadPDF();
+        else downloadCSV();
+    };
+
+    // --- EDIT HANDLERS ---
+    const handleEdit = (transaction) => {
+        const dateValue = transaction.date ? new Date(transaction.date).toISOString().split('T')[0] : '';
+        setEditingTx({ ...transaction, date: dateValue });
+    };
+    const handleCancelEdit = () => setEditingTx(null);
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditingTx(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        const { id, date, amount, currency, channel, motif } = editingTx;
+        try {
+            const res = await axios.patch(
+                `${API_BASE_URL}/transactions/item/${id}`,
+                { date, amount: parseFloat(amount), currency, channel, motif },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if ([200, 204].includes(res.status)) {
+                setBanner({ message: "✅ Transaction updated successfully!", type: "success" });
+                setEditingTx(null);
+                fetchAllTransactions();
+                setTimeout(() => calculateMontantDisponible(), 500); // recalc after update
+            }
+        } catch (error) {
+            setBanner({ message: `❌ Error updating: ${error.message}`, type: "error" });
+        } finally {
+            setTimeout(() => setBanner({ message: "", type: "" }), 4000);
+        }
+    };
+
+    // --- DELETE HANDLERS ---
+    const confirmDelete = (id) => setConfirmDeleteTxId(id);
+    const cancelDelete = () => setConfirmDeleteTxId(null);
+    const handleDelete = async (id) => {
+        setConfirmDeleteTxId(null);
+        try {
+            const res = await axios.delete(`${API_BASE_URL}/transactions/item/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if ([200, 202, 204].includes(res.status)) {
+                setBanner({ message: "🗑️ Transaction deleted successfully!", type: "success" });
+                const updatedTx = transactions.filter(tx => tx.id !== id);
+                setTransactions(updatedTx);
+                calculateMontantDisponible(updatedTx); // recalc after deletion
+            }
+        } catch (error) {
+            setBanner({ message: `❌ Error deleting: ${error.message}`, type: "error" });
+        } finally {
+            setTimeout(() => setBanner({ message: "", type: "" }), 4000);
         }
     };
 
     useEffect(() => {
-        fetchAllTransactions();
         fetchAllUsers();
+        fetchAllTransactions();
     }, []);
 
     useEffect(() => {
-        if (usersLoaded && transactions.length > 0) {
-            setTransactions(prev => prev.map(tx => ({
-                ...tx,
-                userName: getUserFullName(tx.user_id),
-            })));
-        }
-    }, [usersLoaded, users]);
-
-    // Calculate Montant Disponible
-    const montantDisponible = transactions.reduce((acc, tx) => {
-        if (tx.channel?.toLowerCase() === "entrées") {
-            if (tx.currency === "$") acc.USD += parseFloat(tx.amount) || 0;
-            if (tx.currency === "FC") acc.FC += parseFloat(tx.amount) || 0;
-        } else if (tx.channel?.toLowerCase() === "sorties") {
-            if (tx.currency === "$") acc.USD -= parseFloat(tx.amount) || 0;
-            if (tx.currency === "FC") acc.FC -= parseFloat(tx.amount) || 0;
-        }
-        return acc;
-    }, { USD: 0, FC: 0 });
-
-    // --- EDIT / DELETE HANDLERS OMITTED (same as your code) ---
+        if (usersLoaded && transactions.length > 0) calculateMontantDisponible();
+    }, [usersLoaded, transactions]);
 
     return (
         <div className="transactions-container">
-            {banner.message && (
-                <div className={`toast-notification ${banner.type}`}>
-                    {banner.message}
-                </div>
-            )}
-            
+            {banner.message && <div className={`toast-notification ${banner.type}`}>{banner.message}</div>}
+
             <h1>Admin Transaction Management</h1>
 
-            {/* Montant Disponible Card */}
-            <div className="card montant-disponible-card" style={{ margin: "1rem 0", padding: "1rem", borderRadius: "8px", backgroundColor: "#e6f7ff", textAlign: "center" }}>
-                <h2>Montant Disponible</h2>
-                <p>USD: <strong>${montantDisponible.USD.toFixed(2)}</strong></p>
-                <p>FC: <strong>{montantDisponible.FC.toFixed(2)} FC</strong></p>
+            {/* Montant Disponible */}
+            <div style={{
+                textAlign: "center",
+                fontWeight: "bold",
+                fontSize: "1.2rem",
+                margin: "1rem 0",
+            }}>
+                Montant Disponible: USD {montantDisponible.USD.toFixed(2)}, FC {montantDisponible.FC.toFixed(2)}
             </div>
 
-            {/* Existing Transactions Table */}
+            {/* Transactions Table */}
             <div className="card">
                 <div className="table-header">
                     <h2>All Transactions</h2>
-                    <button className="action-btn download-btn" onClick={handleDownload}>
-                        Télécharger
-                    </button>
+                    <button className="action-btn download-btn" onClick={handleDownload}>Télécharger</button>
                 </div>
                 <div className="table-responsive">
                     <table className="transactions-table admin-table">
@@ -211,23 +274,21 @@ export default function AdminTransactionsPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {transactions.length > 0 ? (
-                                transactions.map((tx) => (
-                                    <tr key={tx.id}>
-                                        <td><strong>{tx.userName}</strong></td>
-                                        <td>{formatDate(tx.date)}</td>
-                                        <td>{tx.amount}</td>
-                                        <td>{tx.currency}</td>
-                                        <td>{tx.channel}</td>
-                                        <td>{tx.motif}</td>
-                                        <td>{tx.file ? <a href={tx.file} target="_blank" rel="noopener noreferrer">View</a> : "-"}</td>
-                                        <td>
-                                            <button className="action-btn edit-btn" onClick={() => handleEdit(tx)}>Edit</button>
-                                            <button className="action-btn delete-btn" onClick={() => confirmDelete(tx.id)}>Delete</button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
+                            {transactions.length > 0 ? transactions.map(tx => (
+                                <tr key={tx.id}>
+                                    <td><strong>{getUserFullName(tx.user_id)}</strong></td>
+                                    <td>{formatDate(tx.date)}</td>
+                                    <td>{tx.amount}</td>
+                                    <td>{tx.currency}</td>
+                                    <td>{tx.channel}</td>
+                                    <td>{tx.motif}</td>
+                                    <td>{tx.file ? <a href={tx.file} target="_blank" rel="noopener noreferrer">View</a> : "-"}</td>
+                                    <td>
+                                        <button className="action-btn edit-btn" onClick={() => handleEdit(tx)}>Edit</button>
+                                        <button className="action-btn delete-btn" onClick={() => confirmDelete(tx.id)}>Delete</button>
+                                    </td>
+                                </tr>
+                            )) : (
                                 <tr><td colSpan="8" className="text-center">No transactions found.</td></tr>
                             )}
                         </tbody>
@@ -235,7 +296,77 @@ export default function AdminTransactionsPage() {
                 </div>
             </div>
 
-            {/* Users Table OMITTED for brevity (keep your existing logic) */}
+            {/* Edit Modal */}
+            {editingTx && (
+                <div className="modal-overlay">
+                    <form onSubmit={handleUpdate} className="edit-form modal-content">
+                        <h3>Edit Transaction #{editingTx.id}</h3>
+                        <label>Date:<input type="date" name="date" value={editingTx.date} onChange={handleEditChange} required /></label>
+                        <label>Amount:<input type="number" name="amount" value={editingTx.amount} onChange={handleEditChange} step="0.01" required /></label>
+                        <label>Currency:<input type="text" name="currency" value={editingTx.currency} onChange={handleEditChange} required /></label>
+                        <label>Channel:<input type="text" name="channel" value={editingTx.channel} onChange={handleEditChange} required /></label>
+                        <label>Motif:<input type="text" name="motif" value={editingTx.motif} onChange={handleEditChange} required /></label>
+                        <div className="form-actions">
+                            <button type="submit" className="action-btn save-btn">Save Changes</button>
+                            <button type="button" onClick={handleCancelEdit} className="action-btn cancel-btn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* Delete Modal */}
+            {confirmDeleteTxId && (
+                <div className="modal-overlay">
+                    <div className="confirm-modal modal-content">
+                        <span className="warning-icon">⚠️</span>
+                        <h3>Confirm Deletion</h3>
+                        <p>Are you sure you want to permanently delete transaction <strong>#{confirmDeleteTxId}</strong>? This action cannot be undone.</p>
+                        <div className="form-actions">
+                            <button className="action-btn delete-confirm-btn" onClick={() => handleDelete(confirmDeleteTxId)}>Yes, Delete</button>
+                            <button type="button" className="action-btn cancel-btn" onClick={cancelDelete}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Users Table */}
+            <div className="card" style={{ marginTop: "2rem" }}>
+                <div className="table-header"><h2>All Registered Users</h2></div>
+                <div className="table-responsive">
+                    <table className="transactions-table admin-table">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Nom</th>
+                                <th>Post-Nom</th>
+                                <th>Email</th>
+                                <th>Address</th>
+                                <th>Date de Naissance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {users.length > 0 ? users.map(user => (
+                                <tr key={user.id}>
+                                    <td><strong>{user.id}</strong></td>
+                                    <td>{user.name}</td>
+                                    <td>{user.surname}</td>
+                                    <td>{user.email}</td>
+                                    <td>{user.address || "-"}</td>
+                                    <td>{user.dob ? formatDate(user.dob) : "-"}</td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="6" className="text-center">
+                                        {banner.message.includes("Access Denied")
+                                            ? "Access Denied. Admin privileges required."
+                                            : "No users found or data is loading..."}
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 }

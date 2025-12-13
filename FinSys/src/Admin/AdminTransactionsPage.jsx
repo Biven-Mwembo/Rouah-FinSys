@@ -27,6 +27,10 @@ export default function AdminTransactionsPage() {
     const [banner, setBanner] = useState({ message: "", type: "" });
     const [editingTx, setEditingTx] = useState(null);
     const [confirmDeleteTxId, setConfirmDeleteTxId] = useState(null);
+    // New state for search filters
+    const [searchDate, setSearchDate] = useState('');
+    const [searchUser, setSearchUser] = useState('');
+    const [searchChannel, setSearchChannel] = useState('');
 
     const token = localStorage.getItem("token");
 
@@ -48,7 +52,9 @@ export default function AdminTransactionsPage() {
                 return res.json();
             })
             .then((data) => {
-                const mappedData = data.map(tx => ({
+                // Filter to only approved transactions
+                const approvedData = data.filter(tx => tx.status === 'approved');
+                const mappedData = approvedData.map(tx => ({
                     ...tx,
                     userName: getUserFullName(tx.user_id),
                 }));
@@ -92,10 +98,10 @@ export default function AdminTransactionsPage() {
 
     const downloadPDF = () => {
         const doc = new jsPDF();
-        doc.text("All Transactions", 20, 10);
+        doc.text("Approved Transactions", 20, 10);
         autoTable(doc, {
             head: [["User", "Date", "Amount", "Currency", "Channel", "Motif", "Status"]],
-            body: transactions.map(tx => [
+            body: filteredTransactions.map(tx => [
                 tx.userName,
                 formatDate(tx.date),
                 tx.amount,
@@ -105,12 +111,12 @@ export default function AdminTransactionsPage() {
                 tx.status,
             ]),
         });
-        doc.save("all_transactions.pdf");
+        doc.save("approved_transactions.pdf");
     };
 
     const downloadCSV = () => {
         const csvHeaders = ["User", "Date", "Amount", "Currency", "Channel", "Motif", "Status"];
-        const csvRows = transactions.map(tx => [
+        const csvRows = filteredTransactions.map(tx => [
             tx.userName,
             formatDate(tx.date),
             tx.amount,
@@ -124,7 +130,7 @@ export default function AdminTransactionsPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "all_transactions.csv";
+        a.download = "approved_transactions.csv";
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -157,8 +163,16 @@ export default function AdminTransactionsPage() {
         }
     }, [usersLoaded, users]);
 
-    // Calculate Montant Disponible
-    const montantDisponible = transactions.reduce((acc, tx) => {
+    // Filter transactions based on search criteria
+    const filteredTransactions = transactions.filter(tx => {
+        const matchesDate = !searchDate || formatDate(tx.date).toLowerCase().includes(searchDate.toLowerCase());
+        const matchesUser = !searchUser || tx.userName.toLowerCase().includes(searchUser.toLowerCase());
+        const matchesChannel = !searchChannel || tx.channel.toLowerCase().includes(searchChannel.toLowerCase());
+        return matchesDate && matchesUser && matchesChannel;
+    });
+
+    // Calculate Montant Disponible based on filtered transactions (approved only)
+    const montantDisponible = filteredTransactions.reduce((acc, tx) => {
         if (tx.channel?.toLowerCase() === "entrées") {
             if (tx.currency === "$") acc.USD += parseFloat(tx.amount) || 0;
             if (tx.currency === "FC") acc.FC += parseFloat(tx.amount) || 0;
@@ -191,7 +205,28 @@ export default function AdminTransactionsPage() {
             {/* Existing Transactions Table */}
             <div className="card">
                 <div className="table-header">
-                    <h2>All Transactions</h2>
+                    <h2>Approved Transactions</h2>
+                    {/* Search Bar */}
+                    <div className="search-bar" style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                        <input 
+                            type="text" 
+                            placeholder="Search by Date (e.g., 2023/12/01)" 
+                            value={searchDate} 
+                            onChange={(e) => setSearchDate(e.target.value)} 
+                        />
+                        <input 
+                            type="text" 
+                            placeholder="Search by User Name" 
+                            value={searchUser} 
+                            onChange={(e) => setSearchUser(e.target.value)} 
+                        />
+                        <input 
+                            type="text" 
+                            placeholder="Search by Channel" 
+                            value={searchChannel} 
+                            onChange={(e) => setSearchChannel(e.target.value)} 
+                        />
+                    </div>
                     <button className="action-btn download-btn" onClick={handleDownload}>
                         Télécharger
                     </button>
@@ -206,13 +241,13 @@ export default function AdminTransactionsPage() {
                                 <th>Currency</th>
                                 <th>Channel</th>
                                 <th>Motif</th>
-                                <th>File</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {transactions.length > 0 ? (
-                                transactions.map((tx) => (
+                            {filteredTransactions.length > 0 ? (
+                                filteredTransactions.map((tx) => (
                                     <tr key={tx.id}>
                                         <td><strong>{tx.userName}</strong></td>
                                         <td>{formatDate(tx.date)}</td>
@@ -220,7 +255,7 @@ export default function AdminTransactionsPage() {
                                         <td>{tx.currency}</td>
                                         <td>{tx.channel}</td>
                                         <td>{tx.motif}</td>
-                                        <td>{tx.file ? <a href={tx.file} target="_blank" rel="noopener noreferrer">View</a> : "-"}</td>
+                                        <td>{tx.status}</td>
                                         <td>
                                             <button className="action-btn edit-btn" onClick={() => handleEdit(tx)}>Edit</button>
                                             <button className="action-btn delete-btn" onClick={() => confirmDelete(tx.id)}>Delete</button>
@@ -228,7 +263,7 @@ export default function AdminTransactionsPage() {
                                     </tr>
                                 ))
                             ) : (
-                                <tr><td colSpan="8" className="text-center">No transactions found.</td></tr>
+                                <tr><td colSpan="8" className="text-center">No approved transactions found.</td></tr>
                             )}
                         </tbody>
                     </table>

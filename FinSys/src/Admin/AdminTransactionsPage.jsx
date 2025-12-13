@@ -75,14 +75,16 @@ export default function AdminTransactionsPage() {
                 return res.json();
             })
             .then((data) => {
-                setTransactions(data);
+                // Sort newest to oldest
+                const sortedData = data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                setTransactions(sortedData);
             })
             .catch((error) =>
                 setBanner({ message: `Failed to fetch data: ${error.message}`, type: "error" })
             );
     };
 
-    // --- CALCULATE USER NAMES ---
+    // --- GET USER FULL NAME ---
     const getUserFullName = (userId) => {
         const user = users.find(u => u.id === userId);
         return user ? `${user.name || ''} ${user.surname || ''}`.trim() : userId || "N/A";
@@ -108,11 +110,9 @@ export default function AdminTransactionsPage() {
     const downloadPDF = () => {
         const doc = new jsPDF();
 
-        // Title
         doc.setFontSize(16);
         doc.text("All Transactions", doc.internal.pageSize.getWidth() / 2, 10, { align: "center" });
 
-        // Montant Disponible
         doc.setFontSize(12);
         doc.setFont(undefined, "bold");
         doc.text(
@@ -186,18 +186,18 @@ export default function AdminTransactionsPage() {
 
     const handleUpdate = async (e) => {
         e.preventDefault();
-        const { id, date, amount, currency, channel, motif } = editingTx;
+        const { id, date, amount, currency, channel, motif, status } = editingTx;
         try {
             const res = await axios.patch(
                 `${API_BASE_URL}/transactions/item/${id}`,
-                { date, amount: parseFloat(amount), currency, channel, motif },
+                { date, amount: parseFloat(amount), currency, channel, motif, status },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             if ([200, 204].includes(res.status)) {
                 setBanner({ message: "✅ Transaction updated successfully!", type: "success" });
                 setEditingTx(null);
                 fetchAllTransactions();
-                setTimeout(() => calculateMontantDisponible(), 500); // recalc after update
+                setTimeout(() => calculateMontantDisponible(), 500);
             }
         } catch (error) {
             setBanner({ message: `❌ Error updating: ${error.message}`, type: "error" });
@@ -219,7 +219,7 @@ export default function AdminTransactionsPage() {
                 setBanner({ message: "🗑️ Transaction deleted successfully!", type: "success" });
                 const updatedTx = transactions.filter(tx => tx.id !== id);
                 setTransactions(updatedTx);
-                calculateMontantDisponible(updatedTx); // recalc after deletion
+                calculateMontantDisponible(updatedTx);
             }
         } catch (error) {
             setBanner({ message: `❌ Error deleting: ${error.message}`, type: "error" });
@@ -269,7 +269,7 @@ export default function AdminTransactionsPage() {
                                 <th>Currency</th>
                                 <th>Channel</th>
                                 <th>Motif</th>
-                                <th>File</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -282,7 +282,7 @@ export default function AdminTransactionsPage() {
                                     <td>{tx.currency}</td>
                                     <td>{tx.channel}</td>
                                     <td>{tx.motif}</td>
-                                    <td>{tx.file ? <a href={tx.file} target="_blank" rel="noopener noreferrer">View</a> : "-"}</td>
+                                    <td>{tx.status}</td>
                                     <td>
                                         <button className="action-btn edit-btn" onClick={() => handleEdit(tx)}>Edit</button>
                                         <button className="action-btn delete-btn" onClick={() => confirmDelete(tx.id)}>Delete</button>
@@ -306,6 +306,7 @@ export default function AdminTransactionsPage() {
                         <label>Currency:<input type="text" name="currency" value={editingTx.currency} onChange={handleEditChange} required /></label>
                         <label>Channel:<input type="text" name="channel" value={editingTx.channel} onChange={handleEditChange} required /></label>
                         <label>Motif:<input type="text" name="motif" value={editingTx.motif} onChange={handleEditChange} required /></label>
+                        <label>Status:<input type="text" name="status" value={editingTx.status} onChange={handleEditChange} required /></label>
                         <div className="form-actions">
                             <button type="submit" className="action-btn save-btn">Save Changes</button>
                             <button type="button" onClick={handleCancelEdit} className="action-btn cancel-btn">Cancel</button>

@@ -278,11 +278,23 @@ export default function AdminTransactionsPage() {
                                 <tr key={tx.id}>
                                     <td><strong>{getUserFullName(tx.user_id)}</strong></td>
                                     <td>{formatDate(tx.date)}</td>
-                                    <td>{tx.amount}</td>
+                                    <td style={{ color: tx.channel?.toLowerCase() === "sorties" ? "red" : "green", fontWeight: "bold" }}>
+                                        {tx.amount}
+                                    </td>
                                     <td>{tx.currency}</td>
                                     <td>{tx.channel}</td>
                                     <td>{tx.motif}</td>
-                                    <td>{tx.status}</td>
+                                    <td>
+                                        <span style={{
+                                            padding: "0.2rem 0.5rem",
+                                            borderRadius: "5px",
+                                            color: "white",
+                                            backgroundColor: tx.status.toLowerCase() === "approved" ? "green" :
+                                                tx.status.toLowerCase() === "declined" ? "red" : "gray"
+                                        }}>
+                                            {tx.status}
+                                        </span>
+                                    </td>
                                     <td>
                                         <button className="action-btn edit-btn" onClick={() => handleEdit(tx)}>Edit</button>
                                         <button className="action-btn delete-btn" onClick={() => confirmDelete(tx.id)}>Delete</button>

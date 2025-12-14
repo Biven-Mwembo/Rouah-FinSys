@@ -3,24 +3,27 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// ⚠️ ATTENTION : Les styles sont maintenant définis ci-dessous dans l'objet `styles`
-// et sont appliqués en ligne (inline) aux éléments JSX.
-// Nous conservons les classes pour les badges de statut car ce sont des composants conditionnels.
-
-// --- STYLES INLINE ---
+// --- STYLES INLINE AMÉLIORÉS ET RESPONSIVES ---
 const styles = {
+  // Styles de base et utilitaires pour la réactivité
+  mobileBreakpoint: '600px', 
+  
   // Conteneur principal
   financierContainer: {
-    padding: '20px',
+    padding: '15px',
     maxWidth: '1200px',
     margin: '0 auto',
-    fontFamily: 'Arial, sans-serif',
+    fontFamily: 'Roboto, Arial, sans-serif',
+    backgroundColor: '#f4f7f9', // Fond propre
+    overflowX: 'hidden', // Empêche le défilement horizontal de la page entière
+    minHeight: '100vh',
   },
   pageTitle: {
     textAlign: 'center',
     color: '#1e3c72',
-    marginBottom: '30px',
-    fontSize: '2rem',
+    marginBottom: '35px',
+    fontSize: '2.2rem',
+    fontWeight: '700',
   },
   loadingMessage: {
     textAlign: 'center',
@@ -29,83 +32,94 @@ const styles = {
     color: '#666',
   },
 
-  // --- CARTE DE SOLDE DISPONIBLE ---
+  // --- CARTE DE SOLDE DISPONIBLE (Design Moderne) ---
   availableBalanceCard: {
     background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
     color: 'white',
-    padding: '20px 30px',
-    borderRadius: '12px',
-    boxShadow: '0 6px 15px rgba(0, 0, 0, 0.2)',
-    marginBottom: '25px',
+    padding: '25px 35px',
+    borderRadius: '16px', // Rayon plus grand
+    boxShadow: '0 8px 20px rgba(30, 60, 114, 0.4)', // Ombre plus prononcée
+    marginBottom: '30px',
     width: '100%',
-    maxWidth: '800px',
+    maxWidth: '850px',
     marginLeft: 'auto',
     marginRight: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
   },
   cardTitle: {
-    fontSize: '1.4rem',
+    fontSize: '1.6rem',
     fontWeight: '600',
     marginBottom: '15px',
-    borderBottom: '2px solid rgba(255, 255, 255, 0.3)',
-    paddingBottom: '5px',
+    borderBottom: '2px solid rgba(255, 255, 255, 0.4)',
+    paddingBottom: '8px',
     margin: '0',
+    width: '100%',
+    textAlign: 'center',
   },
   balanceValuesContainer: {
     display: 'flex',
     justifyContent: 'space-around',
-    gap: '20px',
+    gap: '40px',
+    width: '100%',
+    marginTop: '15px',
   },
   balanceItem: {
     textAlign: 'center',
     flexGrow: '1',
+    padding: '10px 0',
+    borderLeft: '1px solid rgba(255, 255, 255, 0.2)',
+    ':first-child': { borderLeft: 'none' } // Non applicable en style inline
   },
   balanceCurrencyLabel: {
     display: 'block',
     fontSize: '0.9rem',
-    opacity: '0.8',
-    marginBottom: '5px',
+    opacity: '0.9',
+    marginBottom: '8px',
   },
   balanceValue: {
-    fontSize: '2.2rem',
+    fontSize: '2.5rem',
     fontWeight: 'bold',
     margin: '0',
-    padding: '5px 0',
   },
   positiveBalance: {
-    color: '#4cd964', // Vert
+    color: '#34d399', // Vert clair moderne
   },
   negativeBalance: {
-    color: '#ff3b30', // Rouge
+    color: '#ef4444', // Rouge vif
   },
 
   // --- CARTES SOMMAIRES (Entrées / Sorties) ---
   summaryCardsGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', // Réactif par défaut
     gap: '20px',
     marginBottom: '30px',
-    maxWidth: '800px',
+    maxWidth: '850px',
     marginLeft: 'auto',
     marginRight: 'auto',
   },
   summaryGroup: {
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#ffffff',
     padding: '20px',
-    borderRadius: '8px',
-    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
+    borderRadius: '12px',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.05)',
     textAlign: 'center',
-    borderLeft: '5px solid',
+    borderBottom: '4px solid',
+    transition: 'transform 0.2s',
   },
   summaryEntrees: {
-    borderColor: '#4cd964', // Vert
+    borderColor: '#34d399', // Vert moderne
   },
   summarySorties: {
-    borderColor: '#ff3b30', // Rouge
+    borderColor: '#ef4444', // Rouge moderne
   },
   summaryGroupTitle: {
-    fontSize: '1.2rem',
+    fontSize: '1.3rem',
     color: '#333',
     margin: '0 0 15px 0',
+    fontWeight: '600',
   },
   summaryValues: {
     display: 'flex',
@@ -118,11 +132,12 @@ const styles = {
   },
   summaryValueLabel: {
     display: 'block',
-    fontSize: '0.85rem',
+    fontSize: '0.9rem',
     color: '#666',
+    marginBottom: '5px',
   },
   summaryValueAmount: {
-    fontSize: '1.5rem',
+    fontSize: '1.6rem',
     fontWeight: 'bold',
     color: '#1e3c72',
   },
@@ -132,54 +147,60 @@ const styles = {
     backgroundColor: '#fff',
     padding: '25px',
     borderRadius: '12px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.08)',
     marginBottom: '30px',
-    maxWidth: '800px',
+    maxWidth: '850px',
     marginLeft: 'auto',
     marginRight: 'auto',
   },
   sectionTitle: {
     fontSize: '1.5rem',
     color: '#1e3c72',
-    borderBottom: '2px solid #eee',
+    borderBottom: '1px solid #ddd',
     paddingBottom: '10px',
     marginBottom: '20px',
+    fontWeight: '600',
   },
   performanceLayout: {
     display: 'flex',
     gap: '30px',
     flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   performanceSection: {
     flex: '1',
-    minWidth: '250px',
+    minWidth: '280px',
+    padding: '10px',
   },
   performanceSectionTitle: {
-    fontSize: '1.1rem',
+    fontSize: '1.2rem',
     color: '#333',
     marginBottom: '15px',
+    fontWeight: '600',
   },
   rankingList: {
     listStyleType: 'none',
     padding: '0',
+    margin: '0',
   },
   topUserItem: {
     display: 'flex',
     alignItems: 'center',
-    padding: '10px 0',
+    padding: '12px 0',
     borderBottom: '1px solid #f0f0f0',
   },
   rankBadge: {
     background: '#1e3c72',
     color: 'white',
     borderRadius: '50%',
-    width: '24px',
-    height: '24px',
+    width: '28px',
+    height: '28px',
     textAlign: 'center',
-    lineHeight: '24px',
-    fontSize: '0.8rem',
+    lineHeight: '28px',
+    fontSize: '0.9rem',
     marginRight: '15px',
     fontWeight: 'bold',
+    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
   },
   userinfo: {
     display: 'flex',
@@ -201,20 +222,24 @@ const styles = {
     backgroundColor: '#007bff',
     color: 'white',
     border: 'none',
-    padding: '10px 20px',
-    borderRadius: '6px',
+    padding: '12px 25px',
+    borderRadius: '8px',
     cursor: 'pointer',
     fontSize: '1rem',
-    fontWeight: '500',
-    transition: 'background-color 0.3s',
+    fontWeight: '600',
+    transition: 'background-color 0.3s, transform 0.1s',
+    boxShadow: '0 4px 6px rgba(0, 123, 255, 0.3)',
   },
   pdfButtonHover: {
     backgroundColor: '#0056b3',
   },
+  pdfButtonActive: {
+    transform: 'scale(0.98)',
+  },
 
   // --- TABLEAU ---
   tableWrapper: {
-    overflowX: 'auto',
+    overflowX: 'auto', // Permet au tableau de défiler horizontalement SEULEMENT
     backgroundColor: '#fff',
     borderRadius: '8px',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -222,33 +247,37 @@ const styles = {
   transactionsTable: {
     width: '100%',
     borderCollapse: 'collapse',
-    minWidth: '700px',
+    minWidth: '750px', // Assure un minimum de largeur pour l'affichage des colonnes
   },
   tableHeader: {
-    backgroundColor: '#f1f1f1',
-    color: '#333',
+    backgroundColor: '#eef1f6',
+    color: '#1e3c72',
     textAlign: 'left',
-    padding: '12px 15px',
+    padding: '15px 15px',
     borderBottom: '2px solid #ddd',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    fontSize: '0.9rem',
   },
   tableCell: {
     padding: '12px 15px',
     borderBottom: '1px solid #eee',
     color: '#444',
+    fontSize: '0.9rem',
   },
   amountEntrees: {
-    color: '#4cd964',
+    color: '#34d399',
     fontWeight: 'bold',
   },
   amountSorties: {
-    color: '#ff3b30',
+    color: '#ef4444',
     fontWeight: 'bold',
   }
 };
 // --- FIN DES STYLES INLINE ---
 
 
-// Fonction pour formater la date
+// Fonction pour formater la date (Inchangé)
 const formatDate = (dateString) => {
   if (!dateString) return "-";
   try {
@@ -264,15 +293,7 @@ const formatDate = (dateString) => {
   }
 };
 
-// Composant Carte pour les totaux (N'est plus utilisé, mais gardé en cas de besoin futur)
-// const Card = ({ title, value }) => (
-//   <div style={styles.summaryCard}>
-//     <h3 style={styles.cardTitle}>{title}</h3>
-//     <p style={styles.cardValue}>{value.toFixed(2)}</p>
-//   </div>
-// );
-
-// NOUVEAU: Composant pour la carte "Montant disponible" (Solde)
+// Composant pour la carte "Montant disponible" (Solde)
 const AvailableBalanceCard = ({ dollarsBalance, fcBalance }) => {
     const dollarStyle = dollarsBalance >= 0 ? styles.positiveBalance : styles.negativeBalance;
     const fcStyle = fcBalance >= 0 ? styles.positiveBalance : styles.negativeBalance;
@@ -312,8 +333,9 @@ const StatusBadge = ({ status }) => {
     statusClass = 'status-rejected';
   }
 
-  // NOTE: Ces classes doivent être définies dans un fichier CSS (ou un style global)
-  // car la couleur de fond et la couleur du texte dépendent de la condition.
+  // NOTE: Ces classes doivent toujours être définies dans votre fichier CSS externe
+  // car les styles en ligne ne gèrent pas la couleur conditionnelle basée sur la classe
+  // sans utiliser de code React supplémentaire.
   return (
     <span className={`status-badge ${statusClass}`}>
       {status || 'N/A'}
@@ -329,11 +351,13 @@ const FinancierTransactionsPage = () => {
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
-  // Add state for users and loading flag
   const [users, setUsers] = useState([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
+  const [buttonHover, setButtonHover] = useState(false); // État pour l'effet de survol du bouton
+  const [buttonActive, setButtonActive] = useState(false); // État pour l'effet d'activation du bouton
 
-  // Function to fetch users
+  // Logique inchangée (fetchUsers, fetchTransactions, calculatePerformance, getUserFullName, getUserName, useEffects...)
+  
   const fetchUsers = async () => {
     try {
       const { data } = await axios.get("https://finsys.onrender.com/api/users/all", {
@@ -347,7 +371,6 @@ const FinancierTransactionsPage = () => {
     }
   };
 
-  // Récupérer les transactions
   const fetchTransactions = async () => {
     try {
       const apiEndpoint = "https://finsys.onrender.com/api/transactions/all";
@@ -364,17 +387,12 @@ const FinancierTransactionsPage = () => {
     }
   };
 
-  // Calculer les métriques de performance et les sommes
   const calculatePerformance = (txData) => {
     if (!txData || txData.length === 0 || !usersLoaded) return;
 
-    // Filter for approved transactions (case-insensitive)
     const approvedTx = txData.filter((tx) => tx.status?.toLowerCase() === "approved");
-    
-    // For sums, use approved if available, else all transactions
     const sumTx = approvedTx.length > 0 ? approvedTx : txData;
 
-    // Calculate sums synchronously
     const totalDollarsEntrees = sumTx
       .filter((tx) => tx.channel === "Entrées" && tx.currency === "$")
       .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
@@ -395,7 +413,6 @@ const FinancierTransactionsPage = () => {
     setFcSum([totalFcEntrees, totalFcSorties]);
 
     const userTxCounts = {};
-    // Calculate transaction count per user
     approvedTx.forEach(tx => {
       const userId = tx.user_id;
       if (userId) userTxCounts[userId] = (userTxCounts[userId] || 0) + 1;
@@ -419,15 +436,14 @@ const FinancierTransactionsPage = () => {
     });
   };
 
-  // Télécharger en PDF
+  // Télécharger en PDF (Inchangé)
   const downloadPDF = () => {
     const doc = new jsPDF();
     let y = 10;
     
     doc.text("Table des Transactions", 20, y);
-    y += 10; // Espace
+    y += 10;
 
-    // Ajout du Montant Disponible dans le PDF
     const dollarsBalance = dollarsSum[0] - dollarsSum[1];
     const fcBalance = fcSum[0] - fcSum[1];
 
@@ -441,25 +457,22 @@ const FinancierTransactionsPage = () => {
     doc.text(`USD Entrées: ${dollarsSum[0].toFixed(2)} $`, 20, y);
     doc.text(`USD Sorties: ${dollarsSum[1].toFixed(2)} $`, 80, y);
     doc.setFont("helvetica", "bold");
-    // Couleur conditionnelle pour le solde USD
-    doc.setTextColor(dollarsBalance >= 0 ? 0 : 255, dollarsBalance >= 0 ? 0 : 0, 0); // Green/Red color
+    doc.setTextColor(dollarsBalance >= 0 ? 0 : 255, dollarsBalance >= 0 ? 0 : 0, 0); 
     doc.text(`Solde USD: ${dollarsBalance.toFixed(2)} $`, 140, y);
-    doc.setTextColor(0, 0, 0); // Reset color
+    doc.setTextColor(0, 0, 0); 
     y += 6;
 
     doc.setFont("helvetica", "normal");
     doc.text(`FC Entrées: ${fcSum[0].toFixed(2)} FC`, 20, y);
     doc.text(`FC Sorties: ${fcSum[1].toFixed(2)} FC`, 80, y);
     doc.setFont("helvetica", "bold");
-    // Couleur conditionnelle pour le solde FC
-    doc.setTextColor(fcBalance >= 0 ? 0 : 255, fcBalance >= 0 ? 0 : 0, 0); // Green/Red color
+    doc.setTextColor(fcBalance >= 0 ? 0 : 255, fcBalance >= 0 ? 0 : 0, 0); 
     doc.text(`Solde FC: ${fcBalance.toFixed(2)} FC`, 140, y);
-    doc.setTextColor(0, 0, 0); // Reset color
-    y += 10; // Espace avant le tableau
+    doc.setTextColor(0, 0, 0); 
+    y += 10;
 
-    // Tableau des transactions
     autoTable(doc, {
-      startY: y, // Commence après les informations du solde
+      startY: y,
       head: [["ID", "Utilisateur", "Date", "Montant", "Devise", "Canal", "Motif", "Statut"]],
       body: transactions.map(tx => [
         tx.id,
@@ -475,36 +488,41 @@ const FinancierTransactionsPage = () => {
     doc.save("transactions.pdf");
   };
 
-  // Helper function to get the full user name
   const getUserFullName = (userId) => {
     const user = users.find(u => u.id === userId);
     const fullName = user ? `${user.name} ${user.surname}`.trim() : userId || "N/A";
     return fullName;
   };
 
-  // Function to get user name for table row
   const getUserName = (tx) => {
     return getUserFullName(tx.user_id);
   };
 
-  // useEffect to fetch both transactions and users
+  // UPDATED: useEffect to fetch both transactions and users
   useEffect(() => {
     fetchTransactions();
     fetchUsers();
   }, []);
 
-  // Separate useEffect to calculate performance only after both are loaded
+  // UPDATED: Separate useEffect to calculate performance only after both are loaded
   useEffect(() => {
     if (transactions.length > 0 && usersLoaded) {
       calculatePerformance(transactions);
     }
   }, [transactions, usersLoaded]);
-
+  
   if (loading) return <p style={styles.loadingMessage}>Chargement des données...</p>;
 
   // Calcul du Montant Disponible pour l'affichage
   const dollarsBalance = dollarsSum[0] - dollarsSum[1];
   const fcBalance = fcSum[0] - fcSum[1];
+
+  // Gestion des styles dynamiques pour le bouton PDF
+  const pdfButtonStyle = {
+    ...styles.pdfButton,
+    ...(buttonHover ? styles.pdfButtonHover : {}),
+    ...(buttonActive ? styles.pdfButtonActive : {}),
+  };
 
   return (
     <>
@@ -565,7 +583,7 @@ const FinancierTransactionsPage = () => {
                         <span style={styles.rankBadge}>{index + 1}</span>
                         <div style={styles.userinfo}>
                           <strong>{user.name}</strong>
-                          <span>{user.txCount} transactions</span>
+                          <span style={{ fontSize: '0.9rem', color: '#666' }}>{user.txCount} transactions</span>
                         </div>
                       </li>
                     ))}
@@ -576,9 +594,9 @@ const FinancierTransactionsPage = () => {
               {/* --- Classement Complet --- */}
               <div style={styles.performanceSection}>
                 <h3 style={styles.performanceSectionTitle}>Classement Complet</h3>
-                <ul style={{ ...styles.rankingList, paddingLeft: '15px' }}>
+                <ul style={styles.rankingList}>
                   {performanceData.sortedUsers.map((user, index) => (
-                    <li key={user.id} style={{ display: 'flex', alignItems: 'center', padding: '5px 0' }}>
+                    <li key={user.id} style={{ display: 'flex', alignItems: 'center', padding: '8px 0', borderBottom: index < performanceData.sortedUsers.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                       <span style={styles.rankNumber}>{index + 1}.</span>
                       <div style={styles.userinfo}>
                         <strong>{user.name}</strong>
@@ -595,10 +613,12 @@ const FinancierTransactionsPage = () => {
         {/* Bouton Télécharger PDF */}
         <div style={styles.buttonContainer}>
           <button 
-            style={styles.pdfButton} 
+            style={pdfButtonStyle} 
             onClick={downloadPDF}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = styles.pdfButtonHover.backgroundColor}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = styles.pdfButton.backgroundColor}
+            onMouseEnter={() => setButtonHover(true)}
+            onMouseLeave={() => setButtonHover(false)}
+            onMouseDown={() => setButtonActive(true)}
+            onMouseUp={() => setButtonActive(false)}
           >
             Télécharger PDF
           </button>
@@ -637,7 +657,6 @@ const FinancierTransactionsPage = () => {
                   <td style={styles.tableCell}>{tx.channel}</td>
                   <td style={styles.tableCell}>{tx.motif}</td>
                   <td style={styles.tableCell}>
-                    {/* StatusBadge garde sa dépendance à un fichier CSS pour la couleur */}
                     <StatusBadge status={tx.status} />
                   </td>
                 </tr>

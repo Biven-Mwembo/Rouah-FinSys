@@ -1,4 +1,4 @@
-import React, { useEffect, useState } => "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";

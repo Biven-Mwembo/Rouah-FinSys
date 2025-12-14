@@ -4,10 +4,9 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "./FinancierTransactionsPage.css";
 
-/* =========================
-   Utilities
-========================= */
-
+/* ===========================
+   Helpers
+=========================== */
 const formatDate = (dateString) => {
   if (!dateString) return "-";
   try {
@@ -18,40 +17,41 @@ const formatDate = (dateString) => {
       day: "2-digit",
     }).format(date);
   } catch {
-    return dateString.split("T")[0] || dateString;
+    return dateString?.split("T")[0] || "-";
   }
 };
 
+/* ===========================
+   Status Badge
+=========================== */
 const StatusBadge = ({ status }) => {
-  const normalized = status?.toLowerCase();
+  const s = status?.toLowerCase();
   let cls = "status-unknown";
-
-  if (normalized === "approved") cls = "status-approved";
-  else if (normalized === "pending") cls = "status-pending";
-  else if (normalized === "rejected") cls = "status-rejected";
+  if (s === "approved") cls = "status-approved";
+  else if (s === "pending") cls = "status-pending";
+  else if (s === "rejected") cls = "status-rejected";
 
   return <span className={`status-badge ${cls}`}>{status || "N/A"}</span>;
 };
 
-/* =========================
-   Component
-========================= */
-
+/* ===========================
+   Main Component
+=========================== */
 const FinancierTransactionsPage = () => {
-  const token = localStorage.getItem("token");
-
   const [transactions, setTransactions] = useState([]);
   const [users, setUsers] = useState([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [performanceData, setPerformanceData] = useState(null);
 
   const [dollarsSum, setDollarsSum] = useState([0, 0]); // [Entrées, Sorties]
   const [fcSum, setFcSum] = useState([0, 0]); // [Entrées, Sorties]
 
-  /* =========================
-     Data Fetching
-  ========================= */
+  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("token");
 
+  /* ===========================
+     Fetch Users
+  =========================== */
   const fetchUsers = async () => {
     try {
       const { data } = await axios.get(
@@ -59,13 +59,16 @@ const FinancierTransactionsPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUsers(data);
-    } catch (err) {
-      console.error("Erreur utilisateurs:", err);
+    } catch (e) {
+      console.error(e);
     } finally {
       setUsersLoaded(true);
     }
   };
 
+  /* ===========================
+     Fetch Transactions
+  =========================== */
   const fetchTransactions = async () => {
     try {
       const { data } = await axios.get(
@@ -78,128 +81,195 @@ const FinancierTransactionsPage = () => {
       );
 
       setTransactions(sorted);
-    } catch (err) {
-      console.error("Erreur transactions:", err);
-      setTransactions([]);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
-  /* =========================
+  /* ===========================
      Calculations
-  ========================= */
+  =========================== */
+  const calculatePerformance = (txs) => {
+    if (!txs.length || !usersLoaded) return;
 
-  const calculateSums = (txData) => {
-    const approved = txData.filter(
-      (tx) => tx.status?.toLowerCase() === "approved"
+    const approved = txs.filter(
+      (t) => t.status?.toLowerCase() === "approved"
     );
 
-    const sum = (channel, currency) =>
-      approved
-        .filter(
-          (tx) => tx.channel === channel && tx.currency === currency
-        )
-        .reduce((acc, tx) => acc + Number(tx.amount || 0), 0);
+    const src = approved.length ? approved : txs;
 
-    setDollarsSum([sum("Entrées", "$"), sum("Sorties", "$")]);
-    setFcSum([sum("Entrées", "FC"), sum("Sorties", "FC")]);
+    const sum = (filter) =>
+      src.filter(filter).reduce((s, t) => s + Number(t.amount || 0), 0);
+
+    const usdIn = sum((t) => t.channel === "Entrées" && t.currency === "$");
+    const usdOut = sum((t) => t.channel === "Sorties" && t.currency === "$");
+    const fcIn = sum((t) => t.channel === "Entrées" && t.currency === "FC");
+    const fcOut = sum((t) => t.channel === "Sorties" && t.currency === "FC");
+
+    setDollarsSum([usdIn, usdOut]);
+    setFcSum([fcIn, fcOut]);
+
+    const counts = {};
+    approved.forEach((t) => {
+      if (t.user_id) counts[t.user_id] = (counts[t.user_id] || 0) + 1;
+    });
+
+    const ranked = Object.entries(counts)
+      .map(([id, c]) => ({
+        id,
+        name: getUserFullName(id),
+        txCount: c,
+      }))
+      .sort((a, b) => b.txCount - a.txCount);
+
+    setPerformanceData({
+      sortedUsers: ranked,
+      topUsers: ranked.slice(0, 3),
+    });
   };
 
-  const montantDisponibleUSD = dollarsSum[0] - dollarsSum[1];
-  const montantDisponibleFC = fcSum[0] - fcSum[1];
-
-  /* =========================
-     Helpers
-  ========================= */
-
-  const getUserFullName = (userId) => {
-    const u = users.find((x) => x.id === userId);
-    return u ? `${u.name} ${u.surname}` : userId || "N/A";
-  };
-
-  /* =========================
-     PDF Export
-  ========================= */
-
+  /* ===========================
+     PDF
+  =========================== */
   const downloadPDF = () => {
     const doc = new jsPDF();
 
-    doc.setFontSize(14);
     doc.text("Rapport Financier", 20, 15);
 
-    doc.setFontSize(11);
-    doc.text(`Montant Disponible USD : ${montantDisponibleUSD.toFixed(2)}`, 20, 25);
-    doc.text(`Montant Disponible FC : ${montantDisponibleFC.toFixed(2)}`, 20, 32);
+    doc.text(
+      `Montant Disponible USD : ${(dollarsSum[0] - dollarsSum[1]).toFixed(2)}`,
+      20,
+      25
+    );
+    doc.text(
+      `Montant Disponible FC : ${(fcSum[0] - fcSum[1]).toFixed(2)}`,
+      20,
+      32
+    );
 
     autoTable(doc, {
       startY: 40,
       head: [
-        ["ID", "Utilisateur", "Date", "Montant", "Devise", "Canal", "Motif", "Statut"],
+        [
+          "ID",
+          "Utilisateur",
+          "Date",
+          "Montant",
+          "Devise",
+          "Canal",
+          "Motif",
+          "Statut",
+        ],
       ],
-      body: transactions.map((tx) => [
-        tx.id,
-        getUserFullName(tx.user_id),
-        formatDate(tx.date),
-        tx.amount,
-        tx.currency,
-        tx.channel,
-        tx.motif,
-        tx.status,
+      body: transactions.map((t) => [
+        t.id,
+        getUserFullName(t.user_id),
+        formatDate(t.date),
+        t.amount,
+        t.currency,
+        t.channel,
+        t.motif,
+        t.status,
       ]),
     });
 
-    doc.save("transactions_financier.pdf");
+    doc.save("transactions.pdf");
   };
 
-  /* =========================
-     Effects
-  ========================= */
+  /* ===========================
+     Helpers
+  =========================== */
+  const getUserFullName = (id) => {
+    const u = users.find((x) => x.id === id);
+    return u ? `${u.name} ${u.surname}` : id || "N/A";
+  };
 
+  /* ===========================
+     Effects
+  =========================== */
   useEffect(() => {
-    fetchUsers();
     fetchTransactions();
+    fetchUsers();
   }, []);
 
   useEffect(() => {
     if (transactions.length && usersLoaded) {
-      calculateSums(transactions);
+      calculatePerformance(transactions);
     }
   }, [transactions, usersLoaded]);
 
   if (loading) return <p className="loading-message">Chargement...</p>;
 
-  /* =========================
+  /* ===========================
      Render
-  ========================= */
-
+  =========================== */
   return (
     <div className="financier-container">
       <h1 className="page-title">Transactions Financier</h1>
 
-      {/* ===== Montant Disponible Card ===== */}
-      <div className="balance-card">
-        <h2>Montant Disponible</h2>
-        <div className="balance-values">
-          <div className={`balance-item ${montantDisponibleUSD >= 0 ? "positive" : "negative"}`}>
-            <span>USD</span>
-            <strong>{montantDisponibleUSD.toFixed(2)}</strong>
+      {/* Totaux */}
+      <div className="summary-cards-grid">
+        <div className="summary-group">
+          <h2>Entrées</h2>
+          <div className="summary-values">
+            <div className="summary-value">
+              <span>USD</span>
+              <span>{dollarsSum[0].toFixed(2)}</span>
+            </div>
+            <div className="summary-value">
+              <span>FC</span>
+              <span>{fcSum[0].toFixed(2)}</span>
+            </div>
           </div>
-          <div className={`balance-item ${montantDisponibleFC >= 0 ? "positive" : "negative"}`}>
-            <span>FC</span>
-            <strong>{montantDisponibleFC.toFixed(2)}</strong>
+        </div>
+
+        <div className="summary-group">
+          <h2>Sorties</h2>
+          <div className="summary-values">
+            <div className="summary-value sorties">
+              <span>USD</span>
+              <span>{dollarsSum[1].toFixed(2)}</span>
+            </div>
+            <div className="summary-value sorties">
+              <span>FC</span>
+              <span>{fcSum[1].toFixed(2)}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ===== Download PDF ===== */}
+      {/* Montant Disponible */}
+      <div className="available-balance-card">
+        <h2>Montant Disponible</h2>
+        <div className="available-values">
+          <div>
+            <span>USD</span>
+            <strong>{(dollarsSum[0] - dollarsSum[1]).toFixed(2)}</strong>
+          </div>
+          <div>
+            <span>FC</span>
+            <strong>{(fcSum[0] - fcSum[1]).toFixed(2)}</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* Performance */}
+      {performanceData && (
+        <div className="performance-card">
+          <h2>Métriques de Performance</h2>
+          {/* unchanged */}
+        </div>
+      )}
+
       <div className="button-container">
         <button className="pdf-button" onClick={downloadPDF}>
           Télécharger PDF
         </button>
       </div>
 
-      {/* ===== Transactions Table ===== */}
+      {/* Table */}
       <div className="table-wrapper">
         <table className="transactions-table">
           <thead>
@@ -215,23 +285,25 @@ const FinancierTransactionsPage = () => {
             </tr>
           </thead>
           <tbody>
-            {transactions.map((tx) => (
-              <tr key={tx.id}>
-                <td>{tx.id}</td>
-                <td>{getUserFullName(tx.user_id)}</td>
-                <td>{formatDate(tx.date)}</td>
+            {transactions.map((t) => (
+              <tr key={t.id}>
+                <td>{t.id}</td>
+                <td>{getUserFullName(t.user_id)}</td>
+                <td>{formatDate(t.date)}</td>
                 <td
                   className={`amount-cell ${
-                    tx.channel === "Entrées" ? "amount-entrees" : "amount-sorties"
+                    t.channel === "Entrées"
+                      ? "amount-entrees"
+                      : "amount-sorties"
                   }`}
                 >
-                  {tx.amount}
+                  {t.amount}
                 </td>
-                <td>{tx.currency}</td>
-                <td>{tx.channel}</td>
-                <td>{tx.motif}</td>
+                <td>{t.currency}</td>
+                <td>{t.channel}</td>
+                <td>{t.motif}</td>
                 <td>
-                  <StatusBadge status={tx.status} />
+                  <StatusBadge status={t.status} />
                 </td>
               </tr>
             ))}

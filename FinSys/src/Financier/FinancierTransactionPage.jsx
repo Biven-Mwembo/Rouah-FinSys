@@ -79,7 +79,7 @@ const styles = {
     marginBottom: '8px',
   },
   balanceValue: {
-    fontSize: '2.5rem',
+    fontSize: '1.5rem',
     fontWeight: 'bold',
     margin: '0',
   },

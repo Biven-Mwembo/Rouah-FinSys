@@ -73,16 +73,19 @@ const AdminUsersPage = () => {
             );
     };
 
-    // Calculate performance metrics
+    // Calculate performance metrics (MODIFIED)
     const calculatePerformance = (txData) => {
         if (!txData || txData.length === 0) {
             setPerformanceData(null);
             return;
         }
 
-        const totalTx = txData.length;
+        // --- FILTER FOR APPROVED TRANSACTIONS FOR BALANCE CALCULATION ---
+        const approvedTxData = txData.filter(tx => tx.status?.toLowerCase() === 'approved');
+        
+        const totalTx = txData.length; // Count ALL transactions (approved or not) for general performance stats
 
-        // Count transactions per user
+        // Count transactions per user (using ALL transactions)
         const userTxCounts = {};
         txData.forEach(tx => {
             const userId = tx.user_id || tx.user?.id;
@@ -102,11 +105,11 @@ const AdminUsersPage = () => {
             }
         });
 
-        // Aggregate amounts by channel and currency
+        // Aggregate amounts by channel and currency (using ONLY APPROVED transactions for aggregates/balance)
         const aggregates = { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } };
-        const userContributions = {};
+        const userContributions = {}; // This stat will also use APPROVED transactions to show effective contribution
 
-        txData.forEach(tx => {
+        approvedTxData.forEach(tx => {
             const userId = tx.user_id || tx.user?.id;
             const channel = tx.channel?.toLowerCase();
             const currency = tx.currency;
@@ -120,7 +123,7 @@ const AdminUsersPage = () => {
                 else if (currency === "FC") aggregates.sorties.fc += amount;
             }
 
-            // User contributions
+            // User contributions (using APPROVED data for accurate performance)
             if (userId) {
                 if (!userContributions[userId]) userContributions[userId] = { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } };
                 if (channel === "entrées") {
@@ -133,6 +136,7 @@ const AdminUsersPage = () => {
             }
         });
 
+        // Recalculate Top User Contributions based on the new APPROVED logic
         const topUserContributions = topUser ? userContributions[topUser.id] || { entrees: { usd: 0, fc: 0 }, sorties: { usd: 0, fc: 0 } } : null;
 
         setPerformanceData({
@@ -148,19 +152,20 @@ const AdminUsersPage = () => {
         fetchPerformanceData();
     }, []);
 
+    // Re-run performance calculation if users or all transactions data changes
     useEffect(() => {
         if (transactions.length > 0 && users.length > 0) {
             calculatePerformance(transactions);
         }
     }, [users, transactions]);
 
-    // Montant Disponible = Entrées - Sorties
+    // Montant Disponible = Entrées (Approved) - Sorties (Approved)
     const montantDisponible = {
         USD: (performanceData?.aggregates?.entrees?.usd || 0) - (performanceData?.aggregates?.sorties?.usd || 0),
         FC: (performanceData?.aggregates?.entrees?.fc || 0) - (performanceData?.aggregates?.sorties?.fc || 0),
     };
 
-    // Handle edit
+    // Handle edit (Unchanged)
     const handleEdit = (user) => {
         const dateValue = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
         setEditingUser({ ...user, dob: dateValue });
@@ -195,7 +200,7 @@ const AdminUsersPage = () => {
             if (res.status === 204) {
                 setBanner({ message: "✅ User updated successfully!", type: "success" });
                 setEditingUser(null);
-                fetchAllUsers();
+                fetchAllUsers(); // Re-fetch users
             }
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.response?.data || error.message || "Failed to update user.";
@@ -205,7 +210,7 @@ const AdminUsersPage = () => {
         }
     };
 
-    // Handle delete
+    // Handle delete (Unchanged)
     const confirmDelete = (id) => setConfirmDeleteId(id);
     const cancelDelete = () => setConfirmDeleteId(null);
 
@@ -219,6 +224,8 @@ const AdminUsersPage = () => {
             if (res.status === 204) {
                 setBanner({ message: "🗑️ User deleted successfully!", type: "success" });
                 setUsers(prev => prev.filter(user => user.id !== id));
+                // Note: The transaction performance will automatically update via the useEffect hook triggered by user change
+                // For immediate update, we'd need to re-fetch transactions, but relying on the useEffect chain is cleaner.
             }
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.message || "Failed to delete user.";
@@ -244,7 +251,7 @@ const AdminUsersPage = () => {
                             <h3>Top Contributor</h3>
                             {performanceData.topUser ? (
                                 <p>
-                                    <strong>{performanceData.topUser.name} {performanceData.topUser.surname}</strong> added the most transactions: 
+                                    <strong>{performanceData.topUser.name} {performanceData.topUser.surname}</strong> added the most transactions (total): 
                                     {performanceData.topUser.txCount} out of {performanceData.totalTx}.
                                 </p>
                             ) : (
@@ -252,20 +259,20 @@ const AdminUsersPage = () => {
                             )}
                         </div>
 
-                        {/* Montant Disponible Card */}
+                        {/* Montant Disponible Card (UPDATED TEXT) */}
                         <div className="card montant-disponible-card" style={{ marginBottom: "1rem", backgroundColor: "#e6f7ff", padding: "1rem", borderRadius: "8px", textAlign: "center" }}>
-                            <h3>Montant Disponible</h3>
+                            <h3>Montant Disponible (Approuvé)</h3>
                             <p>USD: <strong>${montantDisponible.USD.toFixed(2)}</strong></p>
                             <p>FC: <strong>{montantDisponible.FC.toFixed(2)} FC</strong></p>
                         </div>
 
-                        {/* Entrées */}
+                        {/* Entrées (MODIFIED TEXT) */}
                         <div style={{ marginBottom: "1rem" }}>
-                            <h3>Entrées (Income)</h3>
+                            <h3>Entrées (Approuvées)</h3>
                             <p>Total: ${performanceData.aggregates.entrees.usd.toFixed(2)} | {performanceData.aggregates.entrees.fc.toFixed(2)} FC</p>
                             {performanceData.topUser && performanceData.topUserContributions ? (
                                 <>
-                                    <p><strong>{performanceData.topUser.name}'s Contribution:</strong></p>
+                                    <p><strong>{performanceData.topUser.name}'s Contribution (Approuvée):</strong></p>
                                     <div>
                                         <label>$: {performanceData.topUserContributions.entrees.usd.toFixed(2)} / ${performanceData.aggregates.entrees.usd.toFixed(2)}</label>
                                         <div className="progress-bar">
@@ -279,16 +286,16 @@ const AdminUsersPage = () => {
                                         </div>
                                     </div>
                                 </>
-                            ) : <p>No contributions.</p>}
+                            ) : <p>No approved contributions.</p>}
                         </div>
 
-                        {/* Sorties */}
+                        {/* Sorties (MODIFIED TEXT) */}
                         <div>
-                            <h3>Sorties (Expenses)</h3>
+                            <h3>Sorties (Approuvées)</h3>
                             <p>Total: ${performanceData.aggregates.sorties.usd.toFixed(2)} | {performanceData.aggregates.sorties.fc.toFixed(2)} FC</p>
                             {performanceData.topUser && performanceData.topUserContributions ? (
                                 <>
-                                    <p><strong>{performanceData.topUser.name}'s Contribution:</strong></p>
+                                    <p><strong>{performanceData.topUser.name}'s Contribution (Approuvée):</strong></p>
                                     <div>
                                         <label>$: {performanceData.topUserContributions.sorties.usd.toFixed(2)} / ${performanceData.aggregates.sorties.usd.toFixed(2)}</label>
                                         <div className="progress-bar">
@@ -302,7 +309,7 @@ const AdminUsersPage = () => {
                                         </div>
                                     </div>
                                 </>
-                            ) : <p>No contributions.</p>}
+                            ) : <p>No approved contributions.</p>}
                         </div>
                     </div>
                 </div>

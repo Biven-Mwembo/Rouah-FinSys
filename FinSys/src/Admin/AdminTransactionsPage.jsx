@@ -87,6 +87,7 @@ export default function AdminTransactionsPage() {
                     userName: getUserFullName(tx.user_id),
                 }));
                 setTransactions(mappedData);
+                // Recalculate balance using all fetched data
                 calculateMontantDisponible(mappedData);
             })
             .catch((error) =>
@@ -94,11 +95,15 @@ export default function AdminTransactionsPage() {
             );
     };
 
-    // --- CALCULATE MONTANT DISPONIBLE
+    // --- CALCULATE MONTANT DISPONIBLE (MODIFIÉ POUR INCLURE UNIQUEMENT LES TRANSACTIONS APPROUVÉES)
     const calculateMontantDisponible = (txData) => {
         let USD = 0;
         let FC = 0;
-        txData.forEach(tx => {
+        
+        // Filtrer uniquement les transactions approuvées
+        const approvedTx = txData.filter(tx => tx.status?.toLowerCase() === 'approved');
+
+        approvedTx.forEach(tx => {
             const amount = parseFloat(tx.amount) || 0;
             if (tx.channel?.toLowerCase() === "entrées") {
                 if (tx.currency === "$") USD += amount;
@@ -111,7 +116,7 @@ export default function AdminTransactionsPage() {
         setMontantDisponible({ USD, FC });
     };
 
-    // --- DOWNLOAD PDF / CSV
+    // --- DOWNLOAD PDF / CSV (Inchangé)
     const downloadPDF = () => {
         const doc = new jsPDF();
         doc.text("All Transactions", 20, 10);
@@ -183,7 +188,8 @@ export default function AdminTransactionsPage() {
             if (res.status === 204 || res.status === 200) {
                 setBanner({ message: "✅ Transaction updated successfully!", type: "success" });
                 setEditingTx(null);
-                fetchAllTransactions();
+                // Re-fetch all to ensure data integrity and re-calculation of balance
+                fetchAllTransactions(); 
             }
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.message || "Failed to update transaction.";
@@ -202,8 +208,13 @@ export default function AdminTransactionsPage() {
             });
             if ([200, 202, 204].includes(res.status)) {
                 setBanner({ message: "🗑️ Transaction deleted successfully!", type: "success" });
-                setTransactions(prev => prev.filter(tx => tx.id !== id));
-                calculateMontantDisponible(transactions.filter(tx => tx.id !== id));
+                
+                // Mettre à jour transactions localement
+                const newTransactions = transactions.filter(tx => tx.id !== id);
+                setTransactions(newTransactions);
+                
+                // Recalculer le solde avec le nouvel ensemble de données
+                calculateMontantDisponible(newTransactions);
             }
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.message || "Failed to delete transaction.";
@@ -230,7 +241,7 @@ export default function AdminTransactionsPage() {
                     width: "100%",
                     textAlign: "center",
                 }}>
-                    <div style={{ fontSize: "0.95rem", color: "#555", marginBottom: "0.5rem" }}>Montant Disponible</div>
+                    <div style={{ fontSize: "0.95rem", color: "#555", marginBottom: "0.5rem" }}>Montant Disponible (Approuvé)</div>
                     <div style={{ fontSize: "1.5rem", fontWeight: "700", display: "flex", justifyContent: "center", gap: "1rem" }}>
                         <span style={{ color: montantDisponible.USD >= 0 ? "#2ecc71" : "#e74c3c" }}>USD {montantDisponible.USD.toFixed(2)}</span>
                         <span style={{ color: montantDisponible.FC >= 0 ? "#3498db" : "#e74c3c" }}>FC {montantDisponible.FC.toFixed(2)}</span>
@@ -305,7 +316,7 @@ export default function AdminTransactionsPage() {
                                             padding: "0.2rem 0.6rem",
                                             borderRadius: "12px",
                                             color: "#fff",
-                                            backgroundColor: tx.status?.toLowerCase() === "approved" ? "#2ecc71" : "#e74c3c",
+                                            backgroundColor: tx.status?.toLowerCase() === "approved" ? "#2ecc71" : tx.status?.toLowerCase() === "pending" ? "#f39c12" : "#e74c3c",
                                             fontWeight: "600",
                                             fontSize: "0.85rem"
                                         }}>
